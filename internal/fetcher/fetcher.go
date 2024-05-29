@@ -226,10 +226,16 @@ func (f *fetcher) connect(ctx context.Context, accountName string, engineName st
 		return nil, err
 	}
 
+	// switch to the engine if engineName is provided, and set the query_label
 	if engineName != "" {
 		_, err = db.ExecContext(ctx, fmt.Sprintf(`USE ENGINE "%s";`, engineName))
 		if err != nil {
 			return nil, fmt.Errorf("failed to switch to engine %s: %w", engineName, err)
+		}
+
+		_, err = db.ExecContext(ctx, `SET query_label=otel-exporter;`)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set query label: %w", err)
 		}
 	}
 
