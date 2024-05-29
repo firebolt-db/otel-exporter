@@ -20,7 +20,7 @@ on:
 
 jobs:
   lint-and-test:
-    name: lint
+    name: lint-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
