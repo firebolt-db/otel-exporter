@@ -9,13 +9,15 @@ import (
 type EngineRuntimePoint struct {
 	EngineName string
 
-	EngineCluster int64
-	EventTime     time.Time
-	CPUUsed       float64
-	MemoryUsed    float64
-	DiskUsed      float64
-	CacheHitRatio float64
-	SpilledBytes  int64
+	EngineCluster    int64
+	EventTime        time.Time
+	CPUUsed          float64
+	MemoryUsed       float64
+	DiskUsed         float64
+	CacheHitRatio    float64
+	SpilledBytes     int64
+	RunningQueries   int64
+	SuspendedQueries int64
 }
 
 // Scan fills in EngineRuntimePoint fields from a single row.
@@ -28,6 +30,8 @@ func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 		&p.DiskUsed,
 		&p.CacheHitRatio,
 		&p.SpilledBytes,
+		&p.RunningQueries,
+		&p.SuspendedQueries,
 	)
 }
 
