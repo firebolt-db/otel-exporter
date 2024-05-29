@@ -1,0 +1,42 @@
+# ========================== #
+# Generate "unstable" SemVer #
+# ========================== #
+
+# Generates the "unstable" semantic version in format 0.0.0+SHORT_SHA.
+
+name: genver
+description: Generate "unstable" SemVer
+inputs:
+  sha:
+    required: true
+    description: SHA of commit to generate version for
+outputs:
+  semver:
+    description: Generated version
+    value: ${{ steps.generate-semver.outputs.semver }}
+  semver-oci:
+    description: Generated version (compatible with OCI)
+    value: ${{ steps.generate-semver.outputs.semver-oci }}
+runs:
+  using: "composite"
+  steps:
+
+    - name: Generate short Git SHA
+      id: short-sha
+      shell: bash
+      run: |
+        echo "input sha: ${{ inputs.sha }}"
+        full_sha=${{ inputs.sha }}
+        echo "sha=${full_sha:0:7}" >> $GITHUB_OUTPUT
+
+    - name: Generate SemVer
+      id: generate-semver
+      shell: bash
+      run: |
+        echo "semver=0.0.0+${{ steps.short-sha.outputs.sha }}" >> $GITHUB_OUTPUT
+        echo "semver-oci=0.0.0_${{ steps.short-sha.outputs.sha }}" >> $GITHUB_OUTPUT
+
+    - name: Print results
+      shell: bash
+      run: |
+        echo "Version: ${{ steps.generate-semver.outputs.semver }}"
