@@ -1,0 +1,37 @@
+# =================== #
+# Pull request checks #
+# =================== #
+
+# The purpose of this workflow is to enforce our policies for pull requests
+# that are created in the repository.
+# Those policies consist of styling requirements and protection against some common mistakes.
+
+name: pr
+on:
+
+  pull_request:
+    branches:
+      - '*''
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  lint-and-test:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.58
+      - name: Test
+        run: go test -vet=all ./...
