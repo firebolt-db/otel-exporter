@@ -70,4 +70,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/firebolt-analytics/otel-exporter-test:${{ needs.version.outputs.semver-oci }}
+            ghcr.io/firebolt-db/otel-exporter:${{ needs.version.outputs.semver-oci }}
