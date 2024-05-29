@@ -98,6 +98,8 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 		c.runtimeMetrics.diskUtilization.Record(ctx, mp.DiskUsed, api.WithAttributeSet(attrsSet))
 		c.runtimeMetrics.cacheUtilization.Record(ctx, mp.CacheHitRatio, api.WithAttributeSet(attrsSet))
 		c.runtimeMetrics.diskSpilled.Add(ctx, mp.SpilledBytes, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.runningQueries.Record(ctx, mp.RunningQueries, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.suspendedQueries.Record(ctx, mp.SuspendedQueries, api.WithAttributeSet(attrsSet))
 	}
 
 	wg.Done()

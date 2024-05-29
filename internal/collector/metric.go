@@ -9,6 +9,8 @@ type runtimeMetrics struct {
 	diskUtilization   metric.Float64Gauge
 	cacheUtilization  metric.Float64Gauge
 	diskSpilled       metric.Int64UpDownCounter
+	runningQueries    metric.Int64Gauge
+	suspendedQueries  metric.Int64Gauge
 }
 
 // queryHistoryMetrics specifies a set of engine query history metrics.
@@ -80,6 +82,24 @@ func (c *collector) setupRuntimeMetrics() error {
 		"firebolt.engine.disk.spilled",
 		metric.WithDescription("Amount of spilled data to disk in bytes"),
 		metric.WithUnit("byte"),
+	)
+	if err != nil {
+		return err
+	}
+
+	rm.runningQueries, err = meter.Int64Gauge(
+		"firebolt.engine.running.queries",
+		metric.WithDescription("Number of running queries"),
+		metric.WithUnit("{count}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	rm.suspendedQueries, err = meter.Int64Gauge(
+		"firebolt.engine.suspended.queries",
+		metric.WithDescription("Number of suspended queries"),
+		metric.WithUnit("{count}"),
 	)
 	if err != nil {
 		return err
