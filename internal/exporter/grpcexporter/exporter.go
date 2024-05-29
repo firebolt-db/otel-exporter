@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// NewGRPCExporter creates a new instance of otlpmetricgrpc.Exporter
 func NewGRPCExporter(ctx context.Context, cfg *Config) (*otlpmetricgrpc.Exporter, error) {
 	dialOpts, err := cfg.DialOptions()
 	if err != nil {

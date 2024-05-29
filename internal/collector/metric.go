@@ -2,6 +2,7 @@ package collector
 
 import "go.opentelemetry.io/otel/metric"
 
+// runtimeMetrics specifies a set of engine runtime metrics.
 type runtimeMetrics struct {
 	cpuUtilization    metric.Float64Gauge
 	memoryUtilization metric.Float64Gauge
@@ -10,6 +11,7 @@ type runtimeMetrics struct {
 	diskSpilled       metric.Int64UpDownCounter
 }
 
+// queryHistoryMetrics specifies a set of engine query history metrics.
 type queryHistoryMetrics struct {
 	queryDuration metric.Float64Histogram
 
@@ -26,10 +28,12 @@ type queryHistoryMetrics struct {
 	queueTime metric.Float64Counter
 }
 
+// exporterMetrics specifies a set of supplementary metrics of otel-exporter.
 type exporterMetrics struct {
 	duration metric.Float64Counter
 }
 
+// setupRuntimeMetrics prepares engine runtime metrics with basic attributes and unit.
 func (c *collector) setupRuntimeMetrics() error {
 	meter := c.meterProvider.Meter("firebolt.engine.runtime")
 
@@ -85,6 +89,7 @@ func (c *collector) setupRuntimeMetrics() error {
 	return nil
 }
 
+// setupQueryHistoryMetrics prepares engine query history metrics with basic attributes and unit.
 func (c *collector) setupQueryHistoryMetrics() error {
 	meter := c.meterProvider.Meter("firebolt.engine.query_history")
 
@@ -176,6 +181,7 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	return nil
 }
 
+// setupExporterMetrics prepares supplementary metrics.
 func (c *collector) setupExporterMetrics() error {
 	meter := c.meterProvider.Meter("firebolt.exporter")
 

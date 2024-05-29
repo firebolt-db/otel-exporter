@@ -12,17 +12,28 @@ import (
 	_ "github.com/firebolt-db/firebolt-go-sdk"
 )
 
+// Fetcher is an interface that the metrics fetcher should implement.
 type Fetcher interface {
+	// FetchEngines reads a list of running engines in a single account.
 	FetchEngines(ctx context.Context, accountName string) ([]string, error)
 
+	// FetchRuntimePoints returns a channel of EngineRuntimePoint and pushes data into that channel asynchronously.
+	// It should close the channel when all data points are pushed.
+	// The metrics should be collected within the provided time interval.
 	FetchRuntimePoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan EngineRuntimePoint
+
+	// FetchQueryHistoryPoints returns a channel of QueryHistoryPoint and pushes data into that channel asynchronously
+	// It should close the channel when all data points are pushed.
+	// The metrics should be collected within the provided time interval.
 	FetchQueryHistoryPoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan QueryHistoryPoint
 }
 
+// fetcher is an implementation of Fetcher interface.
 type fetcher struct {
 	clientID, clientSecret string
 }
 
+// New creates a new instance of Fetcher, using Firebolt Service Account credentials provided.
 func New(clientID, clientSecret string) Fetcher {
 	return &fetcher{
 		clientID:     clientID,
@@ -30,7 +41,9 @@ func New(clientID, clientSecret string) Fetcher {
 	}
 }
 
+// FetchEngines returns a list of running engines in account.
 func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]string, error) {
+	// connect to a system engine to read running engines.
 	db, err := f.connect(ctx, accountName, "")
 	if err != nil {
 		return nil, err
@@ -38,6 +51,7 @@ func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]strin
 
 	defer db.Close()
 
+	// we are only interested in running engines.
 	rows, err := db.QueryContext(ctx, "SELECT engine_name FROM information_schema.engines WHERE status = 'RUNNING';")
 	if err != nil {
 		return nil, err
@@ -59,18 +73,21 @@ func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]strin
 	return engines, nil
 }
 
+// FetchRuntimePoints returns a channel of EngineRuntimePoint.
 func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan EngineRuntimePoint {
 	ch := make(chan EngineRuntimePoint)
 
 	go func() {
 		wg := sync.WaitGroup{}
 
+		// metrics for each engine are scanned async.
 		for _, engine := range engines {
 			wg.Add(1)
 
 			go func(engineName string) {
 				defer wg.Done()
 
+				// connect to an engine
 				engDb, err := f.connect(ctx, account, engineName)
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
@@ -81,7 +98,7 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 				}
 				defer engDb.Close()
 
-				// read the metrics
+				// read the metrics. Only interested in most recent metric within the time interval.
 				row := engDb.QueryRowContext(ctx,
 					fmt.Sprintf(
 						`SELECT engine_cluster, event_time, cpu_used, memory_used, disk_used, cache_hit_ratio, spilled_bytes 
@@ -91,6 +108,7 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 						since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
 					))
 
+				// prepare the metric point.
 				erp := EngineRuntimePoint{EngineName: engineName}
 				if err := erp.Scan(row); err != nil {
 					if !errors.Is(err, sql.ErrNoRows) {
@@ -106,6 +124,7 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 			}(engine)
 		}
 
+		// wait until all engines metrics are pushed and close the channel
 		wg.Wait()
 		close(ch)
 	}()
@@ -113,18 +132,21 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 	return ch
 }
 
+// FetchQueryHistoryPoints returns a channel of QueryHistoryPoint.
 func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan QueryHistoryPoint {
 	ch := make(chan QueryHistoryPoint)
 
 	go func() {
 		wg := sync.WaitGroup{}
 
+		// metrics for each engine are scanned async.
 		for _, engine := range engines {
 			wg.Add(1)
 
 			go func(engineName string) {
 				defer wg.Done()
 
+				// connect to an engine
 				engDb, err := f.connect(ctx, account, engineName)
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
@@ -135,7 +157,8 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				}
 				defer engDb.Close()
 
-				// read the metrics
+				// read the metrics within provided time interval. Entries with status='STARTED_EXECUTION' do not provide
+				// any metrics data, so they are skipped.
 				rows, err := engDb.QueryContext(ctx,
 					fmt.Sprintf(
 						`SELECT account_name, user_name, duration_us, status, scanned_rows, scanned_bytes, 
@@ -157,6 +180,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 
 				defer rows.Close()
 
+				// prepare the metric point. There can be multiple queries in history.
 				for rows.Next() {
 					qhp := QueryHistoryPoint{EngineName: engineName}
 
@@ -182,6 +206,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 			}(engine)
 		}
 
+		// wait until all engines metrics are pushed and close the channel
 		wg.Wait()
 		close(ch)
 	}()
@@ -189,6 +214,8 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 	return ch
 }
 
+// connect returns a sql.DB instance for specified account and engine. In case engine name is not provided, it will connect
+// to a system engine.
 func (f *fetcher) connect(ctx context.Context, accountName string, engineName string) (*sql.DB, error) {
 	dsn := fmt.Sprintf("firebolt://?account_name=%s&client_id=%s&client_secret=%s",
 		accountName, f.clientID, f.clientSecret,

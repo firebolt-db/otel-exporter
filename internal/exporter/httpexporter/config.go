@@ -4,12 +4,16 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+// Config specifies the configuration of HTTP exporter.
 type Config struct {
+	// Address is the http address and port of Opentelemetry Collector, for instance 127.0.0.1:4318
 	Address string `env:"FIREBOLT_OTEL_EXPORTER_HTTP_ADDRESS"`
 
+	// TLS specifies http connection TLS options
 	TLS *ConfigConnectionOptionsTLS `env:",noinit"`
 }
 
+// Validate ensures that Config is valid.
 func (c Config) Validate() error {
 	return validation.ValidateStruct(
 		&c,
@@ -18,6 +22,7 @@ func (c Config) Validate() error {
 	)
 }
 
+// ConfigConnectionOptionsTLS is connection TLS options.
 type ConfigConnectionOptionsTLS struct {
 
 	// X509KeyPair to use for mTLS authentication.

@@ -16,6 +16,7 @@ func (o optionFunc) apply(collector *collector) *collector {
 	return o(collector)
 }
 
+// WithExporter applies provided exporter to the Collector
 func WithExporter(e metric.Exporter) Option {
 	return optionFunc(func(collector *collector) *collector {
 		collector.exporter = e
@@ -23,6 +24,7 @@ func WithExporter(e metric.Exporter) Option {
 	})
 }
 
+// WithExportInterval applies provided export interval to the Collector
 func WithExportInterval(interval time.Duration) Option {
 	return optionFunc(func(collector *collector) *collector {
 		collector.exportInterval = interval

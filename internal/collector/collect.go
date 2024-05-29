@@ -10,8 +10,12 @@ import (
 	api "go.opentelemetry.io/otel/metric"
 )
 
+// collectorFn is a function which is responsible for collecting metrics in a single account, with list of engines.
+// It is expected that collectorFn will only collect metrics in time interval between `since` and `till`.
 type collectorFn func(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []string, since, till time.Time)
 
+// Start runs main metrics collection routine with specified interval.
+// Start will block until provided context is done, or the app is closed.
 func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -32,7 +36,9 @@ func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 		func() {
 			defer c.reportExporterDuration(ctx, collectTime)
 
+			// run all collectorFns for each account synchronously
 			for _, acctName := range c.accounts {
+				// fetch engines first, so that the collectorFn doesn't need to
 				engines, err := c.fetcher.FetchEngines(ctx, acctName)
 				if err != nil {
 					slog.Error("failed to fetch engines",
@@ -45,6 +51,7 @@ func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 				wg := &sync.WaitGroup{}
 				wg.Add(len(collectors))
 
+				// run all collectors for the account in parallel
 				for _, colFn := range collectors {
 					go colFn(ctx, wg, acctName, engines, since, collectTime)
 				}
@@ -64,6 +71,7 @@ func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 	}
 }
 
+// reportExporterDuration reports main routine duration counter metric.
 func (c *collector) reportExporterDuration(ctx context.Context, startTime time.Time) {
 	elapsedSeconds := float64(time.Since(startTime)) / float64(time.Second)
 	c.exporterMetrics.duration.Add(ctx, elapsedSeconds)
@@ -71,6 +79,7 @@ func (c *collector) reportExporterDuration(ctx context.Context, startTime time.T
 	slog.DebugContext(ctx, "collecting routine duration", slog.Float64("seconds", elapsedSeconds))
 }
 
+// collectRuntimeMetrics collects and reports engine runtime metrics, such as cpu utilization, memory utilization etc.
 func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []string, since, till time.Time) {
 	slog.DebugContext(ctx, "start collecting runtime metrics", slog.String("accountName", accountName))
 
@@ -96,6 +105,7 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 	slog.DebugContext(ctx, "collecting runtime metrics routine finished", slog.String("accountName", accountName))
 }
 
+// collectQueryHistoryMetrics collects and reports query history metrics, such as rows and bytes scanned, etc.
 func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []string, since, till time.Time) {
 	slog.DebugContext(ctx, "start collecting query history metrics", slog.String("accountName", accountName))
 

@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// EngineRuntimePoint represents a snapshot point of engine runtime metrics.
 type EngineRuntimePoint struct {
 	EngineName string
 
@@ -17,6 +18,7 @@ type EngineRuntimePoint struct {
 	SpilledBytes  int64
 }
 
+// Scan fills in EngineRuntimePoint fields from a single row.
 func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 	return row.Scan(
 		&p.EngineCluster,
@@ -29,6 +31,7 @@ func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 	)
 }
 
+// QueryHistoryPoint represents a snapshot point of query history metrics for a single query.
 type QueryHistoryPoint struct {
 	EngineName string
 

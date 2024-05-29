@@ -21,6 +21,7 @@ type app struct {
 	cfg *config.Config
 }
 
+// NewApp creates a new cli application
 func NewApp() *cli.App {
 	a := &app{}
 
@@ -35,12 +36,15 @@ func NewApp() *cli.App {
 	return a.inner
 }
 
+// before is a cli hook that runs prior to main action of the application
 func (a *app) before(cliCtx *cli.Context) error {
+	// prepare configuration of the app
 	cfg, err := config.NewConfig(cliCtx.Context)
 	if err != nil {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
+	// initialize logging
 	logging.Init(cfg.Logging)
 
 	a.cfg = cfg
@@ -48,6 +52,7 @@ func (a *app) before(cliCtx *cli.Context) error {
 	return nil
 }
 
+// run is a main running function
 func (a *app) run(cliCtx *cli.Context) error {
 	ctx := cliCtx.Context
 	var err error
@@ -57,6 +62,8 @@ func (a *app) run(cliCtx *cli.Context) error {
 	f := fetcher.New(a.cfg.Credentials.ClientID, a.cfg.Credentials.ClientSecret)
 	slog.DebugContext(ctx, "fetcher initialized")
 
+	// Instantiate otel exporter.
+	// Depending on the configuration, this should be either GRPC or HTTP exporter, but one of these is required.
 	var exp metric.Exporter
 	if a.cfg.Exporter.GRPC != nil {
 		exp, err = grpcexporter.NewGRPCExporter(ctx, a.cfg.Exporter.GRPC)
@@ -71,6 +78,7 @@ func (a *app) run(cliCtx *cli.Context) error {
 
 	slog.DebugContext(ctx, "exporter initialized")
 
+	// Initialize collector, which will collect metrics and push them using exporter provided
 	col, err := collector.NewCollector(f, a.cfg.Accounts, collector.WithExporter(exp))
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to initialize metrics collector", slog.Any("error", err))
@@ -84,5 +92,6 @@ func (a *app) run(cliCtx *cli.Context) error {
 		}
 	}()
 
+	// start the regular collecting routine
 	return col.Start(ctx, a.cfg.CollectInterval)
 }

@@ -2,14 +2,16 @@ package logging
 
 import validation "github.com/go-ozzo/ozzo-validation/v4"
 
+// Config is the logging configuration.
 type Config struct {
-	// Format specifies the log output format ( text or json).
+	// Format specifies the log output format (text or json). By default, json log format is used.
 	Format Format `env:"FIREBOLT_OTEL_EXPORTER_LOG_FORMAT,default=json"`
 
-	// Level specifies the log level (debug, info or error)
+	// Level specifies the log level (debug, info or error). By default, info log level is used.
 	Level Level `env:"FIREBOLT_OTEL_EXPORTER_LOG_LEVEL,default=info"`
 }
 
+// Validate ensures that Config is valid.
 func (c Config) Validate() error {
 	return validation.ValidateStruct(
 		&c,
@@ -49,4 +51,5 @@ const (
 	LevelError Level = "error"
 )
 
+// Level is the log level.
 type Level string

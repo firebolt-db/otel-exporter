@@ -17,11 +17,16 @@ import (
 	"google.golang.org/grpc/credentials/oauth"
 )
 
+// Config specifies configuration of the GRPC exporter.
 type Config struct {
-	Address     string `env:"FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS"`
+	// Address is the gRPC address and port of Opentelemetry Collector, for instance 127.0.0.1:4317.
+	Address string `env:"FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS"`
+
+	// Credentials specifies gRPC credentials configuration.
 	Credentials ConfigCredentials
 }
 
+// Validate validates Config.
 func (c Config) Validate() error {
 	return validation.ValidateStruct(
 		&c,
@@ -30,6 +35,7 @@ func (c Config) Validate() error {
 	)
 }
 
+// DialOptions prepares GRPC dial options for Config
 func (c Config) DialOptions() ([]grpc.DialOption, error) {
 	credsOpts, err := c.Credentials.DialOptions()
 	if err != nil {

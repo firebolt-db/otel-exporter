@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 )
 
+// NewHTTPExporter creates a new instance of otlpmetrichttp.Exporter
 func NewHTTPExporter(ctx context.Context, cfg *Config) (*otlpmetrichttp.Exporter, error) {
 	// configure TLS
 	var tlsConfig *tls.Config
