@@ -21,6 +21,7 @@ going to monitor.
 so make sure that permission model allows Service Account use these views.
 
 Find more details on how to create a Service Account in [Firebolt documentation](https://docs.firebolt.io/godocs/Guides/managing-your-organization/service-accounts.html).
+
 3. Run `otel-exporter` docker container.
 
 Example use
