@@ -9,9 +9,9 @@ inputs:
   version:
     required: true
     description: A version to tag the docker image with
-  gh_secret:
+  gh_token:
     required: true
-    description: Github secret
+    description: Github token
 
 runs:
   using: "composite"
@@ -43,7 +43,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ inputs.gh_secret }}
+        password: ${{ inputs.gh_token }}
 
     - name: Build and push
       uses: docker/build-push-action@v5

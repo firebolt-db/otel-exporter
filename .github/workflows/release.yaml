@@ -22,4 +22,4 @@ jobs:
         uses: ./.github/actions/dockerbuild
         with:
           version: ${{ github.event.release.tag_name }}
-          gh_secret: ${{ secrets.GITHUB_TOKEN }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
