@@ -17,7 +17,7 @@ Prometheus etc., support OTLP standard and offer bundled OpenTelemetry collector
 2. Create a Service Account in your Firebolt Organization, and grant it with permissions in accounts which you are
 going to monitor. 
 
-    NOTE: exporter will query `information_schema.engine_metrics_history` and `information_schema.engine_query_history` views,
+    NOTE: exporter will query `information_schema.engines`, `information_schema.engine_metrics_history` and `information_schema.engine_query_history` views,
 so make sure that permission model allows Service Account use these views.
 
 Find more details on how to create a Service Account in [Firebolt documentation](https://docs.firebolt.io/godocs/Guides/managing-your-organization/service-accounts.html).
