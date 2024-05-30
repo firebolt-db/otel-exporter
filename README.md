@@ -43,7 +43,7 @@ Metrics
 -------
 The exporter's structure of meters and metrics is described below. See [OTLP metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/) for reference. 
 
-#### Meter name: `firebolt.engine.runtime`
+### Meter name: `firebolt.engine.runtime`
 
 | Instrument                          | Type              | Description                                                                                |
 |-------------------------------------|-------------------|--------------------------------------------------------------------------------------------|
@@ -59,7 +59,7 @@ All the instruments in this meter have the following attributes:
  - `firebolt.account.name` - name of the account
  - `firebolt.engine.name` - name of the engine
 
-#### Meter name: `firebolt.engine.query_history`
+### Meter name: `firebolt.engine.query_history`
 
 | Instrument                   | Type             | Description                                                     |
 |------------------------------|------------------|-----------------------------------------------------------------|
@@ -79,7 +79,7 @@ All the instruments in this meter have the following attributes:
 - `firebolt.user.name` - name of the user executing query
 - `firebolt.query.status` - status of the query
 
-#### Meter name: `firebolt.exporter`
+### Meter name: `firebolt.exporter`
 
 | Instrument                 | Type            | Description                                     |
 |----------------------------|-----------------|-------------------------------------------------|
