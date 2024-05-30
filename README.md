@@ -6,7 +6,7 @@ The exporter is based on  [OTLP](https://opentelemetry.io/docs/specs/otel/protoc
 [OpenTelemetry collector](https://opentelemetry.io/docs/collector/) of your choice.
 
 In order to use the exporter, you need to have an organization registered with Firebolt since exporter will use
-your Firebolt organization account to access accounts/engines and collect metrics.
+your Firebolt organization Service Account to access accounts/engines and collect metrics.
 
 Exporter is provided as a docker image that can be run in your infrastructure.
 
