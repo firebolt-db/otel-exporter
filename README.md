@@ -55,6 +55,9 @@ The exporter's structure of meters and metrics is described below. See [OTLP met
 | firebolt.engine.running.queries     | Int64Gauge        | Number of running queries                                                                  |
 | firebolt.engine.suspended.queries   | Int64Gauge        | Number of suspended queries                                                                |
 
+All the instruments in this meter have the following attributes:
+ - `firebolt.account.name` - name of the account
+ - `firebolt.engine.name` - name of the engine
 
 #### Meter name: `firebolt.engine.query_history`
 
@@ -69,6 +72,12 @@ The exporter's structure of meters and metrics is described below. See [OTLP met
 | firebolt.query.returned.byte | Int64Counter     | The total number of bytes returned from the query               |
 | firebolt.query.spilled.byte  | Int64Counter     | The total number of bytes spilled (uncompressed)                |
 | firebolt.query.queue.time    | Float64Counter   | Time the query spent in queue                                   |
+
+All the instruments in this meter have the following attributes:
+- `firebolt.account.name` - name of the account
+- `firebolt.engine.name` - name of the engine
+- `firebolt.user.name` - name of the user executing query
+- `firebolt.query.status` - status of the query
 
 #### Meter name: `firebolt.exporter`
 
