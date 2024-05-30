@@ -45,20 +45,20 @@ The exporter's structure of meters and metrics is described below. See [OTLP met
 
 #### Meter name: `firebolt.engine.runtime`
 
-| Metric                             | Type              | Description                                                                                |
-|------------------------------------|-------------------|--------------------------------------------------------------------------------------------|
-| firebolt.engine.cpu.utilization    | Float64Gauge      | Current CPU utilization (percentage)                                                       |
-| firebolt.engine.memory.utilization | Float64Gauge      | Current Memory used (percentage)                                                           |
-| firebolt.engine.disk.utilization   | Float64Gauge      | Currently used disk space which encompasses space used for cache and spilling (percentage) |
-| firebolt.engine.cache.utilization  | Float64Gauge      | Current SSD cache hit ratio (percentage)                                                   |
-| firebolt.engine.disk.spilled       | In64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
-| firebolt.engine.running.queries    | Int64Gauge        | Number of running queries                                                                  |
-| firebolt.engine.suspended.queries  | Int64Gauge        | Number of suspended queries                                                                |
+| Instrument                          | Type              | Description                                                                                |
+|-------------------------------------|-------------------|--------------------------------------------------------------------------------------------|
+| firebolt.engine.cpu.utilization     | Float64Gauge      | Current CPU utilization (percentage)                                                       |
+| firebolt.engine.memory.utilization  | Float64Gauge      | Current Memory used (percentage)                                                           |
+| firebolt.engine.disk.utilization    | Float64Gauge      | Currently used disk space which encompasses space used for cache and spilling (percentage) |
+| firebolt.engine.cache.utilization   | Float64Gauge      | Current SSD cache hit ratio (percentage)                                                   |
+| firebolt.engine.disk.spilled        | In64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
+| firebolt.engine.running.queries     | Int64Gauge        | Number of running queries                                                                  |
+| firebolt.engine.suspended.queries   | Int64Gauge        | Number of suspended queries                                                                |
 
 
 #### Meter name: `firebolt.engine.query_history`
 
-| Metric                       | Type             | Description                                                     |
+| Instrument                   | Type             | Description                                                     |
 |------------------------------|------------------|-----------------------------------------------------------------|
 | firebolt.query.duration      | Float64Histogram | Duration of query execution (second)                            |
 | firebolt.query.scanned.rows  | Int64Counter     | The total number of rows scanned                                |
@@ -72,29 +72,40 @@ The exporter's structure of meters and metrics is described below. See [OTLP met
 
 #### Meter name: `firebolt.exporter`
 
-| Metric                      | Type            | Description                                     |
-|-----------------------------|-----------------|-------------------------------------------------|
-| firebolt.exporter.duration  | Float64Counter  | Duration of collection routine of the exporter  |
+| Instrument                 | Type            | Description                                     |
+|----------------------------|-----------------|-------------------------------------------------|
+| firebolt.exporter.duration | Float64Counter  | Duration of collection routine of the exporter  |
 
 Configuration reference
 -----------------------
 All the configuration variables are passed as environment variables. Variables have prefix `FIREBOLT_OTEL_EXPORTER_*`.
 
-| Parameter                    | Required                       | Description                                                                                                                                                                      | Default value |
-|------------------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| CLIENT_ID                    | Yes                            | Client ID derived from the Service Account                                                                                                                                       |               |
-| CLIENT_SECRET                | Yes                            | Client Secret derived from the Service Account                                                                                                                                   |               |
-| ACCOUNTS                     | Yes                            | List of accounts to monitor (comma separated). The Service Account needs to have access to all these accounts to be able to fetch metrics data. At least one account is required |               |
-| COLLECT_INTERVAL             | No                             | Defines how often metrics will be collected. Ninimal allowed value is 15s                                                                                                        | `30s`         |
-| LOG_FORMAT                   | No                             | Log format, either `json` or `text`                                                                                                                                              | `json`        |
-| LOG_LEVEL                    | No                             | Log level, one of `debug`, `info`, `error`                                                                                                                                       | `info`        |
-| GRPC_ADDRESS                 | Yes, if GRPC collector is used | GRPC address of collector, where metrics will be pushed, for example `127.0.0.1:4317`                                                                                            |               |
-| HTTP_ADDRESS                 | Yes, if HTTP collector is used | HTTP address of collector, where metrics will be pushed, for example `127.0.0.1:4318`                                                                                            |               |
-| GRPC_OAUTH_CLIENT_ID         | No                             | OAuth2 client id, used in GRPC authentication                                                                                                                                    |               |
-| GRPC_OAUTH_CLIENT_SECRET     | No                             | OAuth2 client secret, used in GRPC authentication                                                                                                                                |               |
-| GRPC_OAUTH_TOKEN_URL         | No                             | OAuth2 resource server's token endpoint URL, used in GRPC authentication                                                                                                         |               |
-| SYSTEM_CERT_POOL             | No                             | Enables TLS security based on operating system certificate pool (`true` or `false`), used in GRPC authentication                                                                 | `false`       |
-| HTTP_TLS_X509_CERT_PEM_BLOCK | No                             | Specifies TLS certificate PEM in case HTTP mTLS authentication is used                                                                                                           |               |
-| HTTP_TLS_X509_KEY_PEM_BLOCK  | No                             | Specifies TLS key PEM in case HTTP mTLS authentication is used                                                                                                                   |               |
+| Parameter                                                                                                    | Required                       | Description                                                                                                                                                                      | Default value |
+|--------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| CLIENT_ID                                                                                                    | Yes                            | Client ID derived from the Service Account                                                                                                                                       |               |
+| CLIENT_SECRET                                                                                                | Yes                            | Client Secret derived from the Service Account                                                                                                                                   |               |
+| ACCOUNTS                                                                                                     | Yes                            | List of accounts to monitor (comma separated). The Service Account needs to have access to all these accounts to be able to fetch metrics data. At least one account is required |               |
+| COLLECT_INTERVAL                                                                                             | No                             | Defines how often metrics will be collected. Ninimal allowed value is 15s                                                                                                        | `30s`         |
+| LOG_FORMAT                                                                                                   | No                             | Log format, either `json` or `text`                                                                                                                                              | `json`        |
+| LOG_LEVEL                                                                                                    | No                             | Log level, one of `debug`, `info`, `error`                                                                                                                                       | `info`        |
+| GRPC_ADDRESS                                                                                                 | Yes, if GRPC collector is used | GRPC address of collector, where metrics will be pushed, for example `127.0.0.1:4317`                                                                                            |               |
+| HTTP_ADDRESS                                                                                                 | Yes, if HTTP collector is used | HTTP address of collector, where metrics will be pushed, for example `127.0.0.1:4318`                                                                                            |               |
 
 **NOTE:** Either `FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS` or `FIREBOLT_OTEL_EXPORTER_HTTP_ADDRESS` must be provided.
+
+In case you use gRPC Collector, and it requires OAuth2 authentication, use the parameters described in the table below.
+
+| Parameter                                                                                                    | Required                       | Description                                                                                                                                                                      | Default value |
+|--------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| GRPC_OAUTH_CLIENT_ID                                                                                         | No                             | OAuth2 client id, used in GRPC authentication                                                                                                                                    |               |
+| GRPC_OAUTH_CLIENT_SECRET                                                                                     | No                             | OAuth2 client secret, used in GRPC authentication                                                                                                                                |               |
+| GRPC_OAUTH_TOKEN_URL                                                                                         | No                             | OAuth2 resource server's token endpoint URL, used in GRPC authentication                                                                                                         |               |
+| SYSTEM_CERT_POOL                                                                                             | No                             | Enables TLS security based on operating system certificate pool (`true` or `false`), used in GRPC authentication                                                                 | `false`       |
+
+In case you use HTTP Collector, and it requires TLS authentication, use the parameters described in the table below. 
+
+| Parameter                                                                                                    | Required                       | Description                                                                                                                                                                      | Default value |
+|--------------------------------------------------------------------------------------------------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| HTTP_TLS_X509_CERT_PEM_BLOCK                                                                                 | No                             | Specifies TLS certificate PEM in case HTTP mTLS authentication is used                                                                                                           |               |
+| HTTP_TLS_X509_KEY_PEM_BLOCK                                                                                  | No                             | Specifies TLS key PEM in case HTTP mTLS authentication is used                                                                                                                   |               |
+
