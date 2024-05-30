@@ -48,7 +48,6 @@ func Test_Config(t *testing.T) {
 func Test_Config_MissingCreds(t *testing.T) {
 	os.Clearenv()
 
-	// Set minimal config
 	os.Setenv("FIREBOLT_OTEL_EXPORTER_ACCOUNTS", "acc1,acc2")
 	os.Setenv("FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS", "grpc_address")
 
@@ -94,7 +93,6 @@ func Test_Config_OverrideDefaults(t *testing.T) {
 func Test_Config_GRPC(t *testing.T) {
 	os.Clearenv()
 
-	// Set minimal config
 	os.Setenv("FIREBOLT_OTEL_EXPORTER_ACCOUNTS", "acc1,acc2")
 	os.Setenv("FIREBOLT_OTEL_EXPORTER_CLIENT_ID", "client_id")
 	os.Setenv("FIREBOLT_OTEL_EXPORTER_CLIENT_SECRET", "client_secret")
