@@ -41,4 +41,5 @@ jobs:
         uses: ./.github/actions/dockerbuild
         with:
           version: ${{ needs.version.outputs.semver-oci }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
 
