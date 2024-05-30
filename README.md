@@ -39,9 +39,10 @@ docker run --name firebolt-otel-exporter \
 ghcr.io/firebolt-db/otel-exporter:v0.0.1
 ```
 
-Metrics
--------
-The exporter's structure of meters and metrics is described below. See [OTLP metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/) for reference. 
+Meters and instruments
+----------------------
+
+The exporter's structure of meters and instruments is described below. See [OTLP metrics API](https://opentelemetry.io/docs/specs/otel/metrics/api/) for reference. 
 
 ### Meter name: `firebolt.engine.runtime`
 
