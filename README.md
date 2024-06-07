@@ -46,15 +46,15 @@ The exporter's structure of meters and instruments is described below. See [OTLP
 
 ### Meter name: `firebolt.engine.runtime`
 
-| Instrument                          | Type              | Description                                                                                |
-|-------------------------------------|-------------------|--------------------------------------------------------------------------------------------|
-| firebolt.engine.cpu.utilization     | Float64Gauge      | Current CPU utilization (percentage)                                                       |
-| firebolt.engine.memory.utilization  | Float64Gauge      | Current Memory used (percentage)                                                           |
-| firebolt.engine.disk.utilization    | Float64Gauge      | Currently used disk space which encompasses space used for cache and spilling (percentage) |
-| firebolt.engine.cache.utilization   | Float64Gauge      | Current SSD cache hit ratio (percentage)                                                   |
-| firebolt.engine.disk.spilled        | In64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
-| firebolt.engine.running.queries     | Int64Gauge        | Number of running queries                                                                  |
-| firebolt.engine.suspended.queries   | Int64Gauge        | Number of suspended queries                                                                |
+| Instrument                         | Type               | Description                                                                                |
+|------------------------------------|--------------------|--------------------------------------------------------------------------------------------|
+| firebolt.engine.cpu.utilization    | Float64Gauge       | Current CPU utilization (percentage)                                                       |
+| firebolt.engine.memory.utilization | Float64Gauge       | Current Memory used (percentage)                                                           |
+| firebolt.engine.disk.utilization   | Float64Gauge       | Currently used disk space which encompasses space used for cache and spilling (percentage) |
+| firebolt.engine.cache.hit_ratio    | Float64Gauge       | Current SSD cache hit ratio (percentage)                                                   |
+| firebolt.engine.disk.spilled       | Int64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
+| firebolt.engine.running.queries    | Int64Gauge         | Number of running queries                                                                  |
+| firebolt.engine.suspended.queries  | Int64Gauge         | Number of suspended queries                                                                |
 
 All the instruments in this meter have the following attributes:
  - `firebolt.account.name` - name of the account
@@ -62,17 +62,17 @@ All the instruments in this meter have the following attributes:
 
 ### Meter name: `firebolt.engine.query_history`
 
-| Instrument                   | Type             | Description                                                     |
-|------------------------------|------------------|-----------------------------------------------------------------|
-| firebolt.query.duration      | Float64Histogram | Duration of query execution (second)                            |
-| firebolt.query.scanned.rows  | Int64Counter     | The total number of rows scanned                                |
-| firebolt.query.scanned.byte  | Int64Counter     | The total number of bytes scanned (both from cache and storage) |
-| firebolt.query.insert.rows   | Int64Counter     | The total number of rows written                                |
-| firebolt.query.insert.byte   | Int64Counter     | The total number of bytes written (both to cache and storage)   |
-| firebolt.query.returned.rows | Int64Counter     | The total number of rows returned from the query                |
-| firebolt.query.returned.byte | Int64Counter     | The total number of bytes returned from the query               |
-| firebolt.query.spilled.byte  | Int64Counter     | The total number of bytes spilled (uncompressed)                |
-| firebolt.query.queue.time    | Float64Counter   | Time the query spent in queue                                   |
+| Instrument                    | Type             | Description                                                     |
+|-------------------------------|------------------|-----------------------------------------------------------------|
+| firebolt.query.duration       | Float64Histogram | Duration of query execution (second)                            |
+| firebolt.query.scanned.rows   | Int64Counter     | The total number of rows scanned                                |
+| firebolt.query.scanned.bytes  | Int64Counter     | The total number of bytes scanned (both from cache and storage) |
+| firebolt.query.insert.rows    | Int64Counter     | The total number of rows written                                |
+| firebolt.query.insert.bytes   | Int64Counter     | The total number of bytes written (both to cache and storage)   |
+| firebolt.query.returned.rows  | Int64Counter     | The total number of rows returned from the query                |
+| firebolt.query.returned.bytes | Int64Counter     | The total number of bytes returned from the query               |
+| firebolt.query.spilled.bytes  | Int64Counter     | The total number of bytes spilled (uncompressed)                |
+| firebolt.query.queue.time     | Float64Counter   | Time the query spent in queue                                   |
 
 All the instruments in this meter have the following attributes:
 - `firebolt.account.name` - name of the account

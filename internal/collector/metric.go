@@ -70,8 +70,8 @@ func (c *collector) setupRuntimeMetrics() error {
 	}
 
 	rm.cacheUtilization, err = meter.Float64Gauge(
-		"firebolt.engine.cache.utilization",
-		metric.WithDescription("Current SSD cache hit ratio"),
+		"firebolt.engine.cache.hit_ratio",
+		metric.WithDescription("Current SSD cache hit ratio (percentage)"),
 		metric.WithUnit("percent"),
 	)
 	if err != nil {
@@ -135,9 +135,9 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	}
 
 	qhm.scannedBytes, err = meter.Int64Counter(
-		"firebolt.query.scanned.byte",
+		"firebolt.query.scanned.bytes",
 		metric.WithDescription("The total number of bytes scanned (both from cache and storage)"),
-		metric.WithUnit("byte"),
+		metric.WithUnit("bytes"),
 	)
 	if err != nil {
 		return err
@@ -153,9 +153,9 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	}
 
 	qhm.insertedBytes, err = meter.Int64Counter(
-		"firebolt.query.insert.byte",
+		"firebolt.query.insert.bytes",
 		metric.WithDescription("The total number of bytes written (both to cache and storage)"),
-		metric.WithUnit("byte"),
+		metric.WithUnit("bytes"),
 	)
 	if err != nil {
 		return err
@@ -171,18 +171,18 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	}
 
 	qhm.returnedBytes, err = meter.Int64Counter(
-		"firebolt.query.returned.byte",
+		"firebolt.query.returned.bytes",
 		metric.WithDescription("The total number of bytes returned from the query"),
-		metric.WithUnit("byte"),
+		metric.WithUnit("bytes"),
 	)
 	if err != nil {
 		return err
 	}
 
 	qhm.spilledBytes, err = meter.Int64Counter(
-		"firebolt.query.spilled.byte",
+		"firebolt.query.spilled.bytes",
 		metric.WithDescription("The total number of bytes spilled (uncompressed)"),
-		metric.WithUnit("byte"),
+		metric.WithUnit("bytes"),
 	)
 	if err != nil {
 		return err
