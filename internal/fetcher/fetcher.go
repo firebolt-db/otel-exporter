@@ -185,9 +185,9 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				for rows.Next() {
 					qhp := QueryHistoryPoint{EngineName: engineName}
 
-					userName := sql.NullString{}
+					userName, accountName := sql.NullString{}, sql.NullString{}
 
-					if err := rows.Scan(&qhp.AccountName, &userName, &qhp.DurationMicroSeconds, &qhp.Status,
+					if err := rows.Scan(&accountName, &userName, &qhp.DurationMicroSeconds, &qhp.Status,
 						&qhp.ScannedRows, &qhp.ScannedBytes, &qhp.InsertedRows, &qhp.InsertedBytes, &qhp.SpilledBytes,
 						&qhp.ReturnedRows, &qhp.ReturnedBytes, &qhp.TimeInQueueMicroSeconds,
 					); err != nil {
@@ -200,6 +200,9 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 
 					if userName.Valid {
 						qhp.UserName = userName.String
+					}
+					if accountName.Valid {
+						qhp.AccountName = accountName.String
 					}
 
 					ch <- qhp
@@ -227,13 +230,21 @@ func (f *fetcher) connect(ctx context.Context, accountName string, engineName st
 		return nil, err
 	}
 
-	// switch to the engine if engineName is provided, and set the query_label
+	// switch to the engine if engineName is provided
 	if engineName != "" {
+		// prevent engine from auto stopping caused by exporter queries
+		_, err = db.ExecContext(ctx, `SET auto_start_stop_control=ignore;`)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set auto_start_stop_control = ignore for engine %s: %w", engineName, err)
+		}
+
+		// switch to an engine
 		_, err = db.ExecContext(ctx, fmt.Sprintf(`USE ENGINE "%s";`, engineName))
 		if err != nil {
 			return nil, fmt.Errorf("failed to switch to engine %s: %w", engineName, err)
 		}
 
+		// add a query label to appear in query history
 		_, err = db.ExecContext(ctx, `SET query_label=otel-exporter;`)
 		if err != nil {
 			return nil, fmt.Errorf("failed to set query label: %w", err)

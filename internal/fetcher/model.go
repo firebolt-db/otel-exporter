@@ -9,7 +9,7 @@ import (
 type EngineRuntimePoint struct {
 	EngineName string
 
-	EngineCluster    int64
+	EngineCluster    string
 	EventTime        time.Time
 	CPUUsed          float64
 	MemoryUsed       float64
