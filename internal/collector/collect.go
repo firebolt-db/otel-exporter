@@ -93,13 +93,13 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 
 		attrsSet := attribute.NewSet(attrs...)
 
-		c.runtimeMetrics.cpuUtilization.Record(ctx, mp.CPUUsed, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.memoryUtilization.Record(ctx, mp.MemoryUsed, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.diskUtilization.Record(ctx, mp.DiskUsed, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.cacheUtilization.Record(ctx, mp.CacheHitRatio, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.diskSpilled.Add(ctx, mp.SpilledBytes, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.runningQueries.Record(ctx, mp.RunningQueries, api.WithAttributeSet(attrsSet))
-		c.runtimeMetrics.suspendedQueries.Record(ctx, mp.SuspendedQueries, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.cpuUtilization.Record(ctx, mp.CPUUsed.Float64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.memoryUtilization.Record(ctx, mp.MemoryUsed.Float64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.diskUtilization.Record(ctx, mp.DiskUsed.Float64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.cacheUtilization.Record(ctx, mp.CacheHitRatio.Float64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.diskSpilled.Add(ctx, mp.SpilledBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.runningQueries.Record(ctx, mp.RunningQueries.Int64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.suspendedQueries.Record(ctx, mp.SuspendedQueries.Int64, api.WithAttributeSet(attrsSet))
 	}
 
 	wg.Done()
@@ -117,21 +117,21 @@ func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.Wai
 		attrs := []attribute.KeyValue{
 			attribute.Key("firebolt.account.name").String(accountName),
 			attribute.Key("firebolt.engine.name").String(mp.EngineName),
-			attribute.Key("firebolt.user.name").String(mp.UserName),
-			attribute.Key("firebolt.query.status").String(mp.Status),
+			attribute.Key("firebolt.user.name").String(mp.UserName.String),
+			attribute.Key("firebolt.query.status").String(mp.Status.String),
 		}
 
 		attrsSet := attribute.NewSet(attrs...)
 
-		c.queryHistoryMetrics.queryDuration.Record(ctx, float64(mp.DurationMicroSeconds)/1000000, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.scannedRows.Add(ctx, mp.ScannedRows, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.scannedBytes.Add(ctx, mp.ScannedBytes, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.insertedRows.Add(ctx, mp.InsertedRows, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.insertedBytes.Add(ctx, mp.InsertedBytes, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.returnedRows.Add(ctx, mp.ReturnedRows, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.returnedBytes.Add(ctx, mp.ReturnedBytes, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.spilledBytes.Add(ctx, mp.SpilledBytes, api.WithAttributeSet(attrsSet))
-		c.queryHistoryMetrics.queueTime.Add(ctx, float64(mp.TimeInQueueMicroSeconds)/1000000, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.queryDuration.Record(ctx, float64(mp.DurationMicroSeconds.Int64)/1000000, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.scannedRows.Add(ctx, mp.ScannedRows.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.scannedBytes.Add(ctx, mp.ScannedBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.insertedRows.Add(ctx, mp.InsertedRows.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.insertedBytes.Add(ctx, mp.InsertedBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.returnedRows.Add(ctx, mp.ReturnedRows.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.returnedBytes.Add(ctx, mp.ReturnedBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.spilledBytes.Add(ctx, mp.SpilledBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.queueTime.Add(ctx, float64(mp.TimeInQueueMicroSeconds.Int64)/1000000, api.WithAttributeSet(attrsSet))
 	}
 
 	wg.Done()

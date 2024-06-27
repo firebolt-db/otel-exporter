@@ -185,9 +185,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				for rows.Next() {
 					qhp := QueryHistoryPoint{EngineName: engineName}
 
-					userName, accountName := sql.NullString{}, sql.NullString{}
-
-					if err := rows.Scan(&accountName, &userName, &qhp.DurationMicroSeconds, &qhp.Status,
+					if err := rows.Scan(&qhp.AccountName, &qhp.UserName, &qhp.DurationMicroSeconds, &qhp.Status,
 						&qhp.ScannedRows, &qhp.ScannedBytes, &qhp.InsertedRows, &qhp.InsertedBytes, &qhp.SpilledBytes,
 						&qhp.ReturnedRows, &qhp.ReturnedBytes, &qhp.TimeInQueueMicroSeconds,
 					); err != nil {
@@ -196,13 +194,6 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 							slog.Any("error", err),
 						)
 						return
-					}
-
-					if userName.Valid {
-						qhp.UserName = userName.String
-					}
-					if accountName.Valid {
-						qhp.AccountName = accountName.String
 					}
 
 					ch <- qhp

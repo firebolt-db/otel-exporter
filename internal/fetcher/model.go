@@ -9,15 +9,15 @@ import (
 type EngineRuntimePoint struct {
 	EngineName string
 
-	EngineCluster    string
-	EventTime        time.Time
-	CPUUsed          float64
-	MemoryUsed       float64
-	DiskUsed         float64
-	CacheHitRatio    float64
-	SpilledBytes     int64
-	RunningQueries   int64
-	SuspendedQueries int64
+	EngineCluster    sql.NullString
+	EventTime        sql.Null[time.Time]
+	CPUUsed          sql.NullFloat64
+	MemoryUsed       sql.NullFloat64
+	DiskUsed         sql.NullFloat64
+	CacheHitRatio    sql.NullFloat64
+	SpilledBytes     sql.NullInt64
+	RunningQueries   sql.NullInt64
+	SuspendedQueries sql.NullInt64
 }
 
 // Scan fills in EngineRuntimePoint fields from a single row.
@@ -39,18 +39,18 @@ func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 type QueryHistoryPoint struct {
 	EngineName string
 
-	AccountName string
-	UserName    string
+	AccountName sql.NullString
+	UserName    sql.NullString
 
-	DurationMicroSeconds int64
-	Status               string
+	DurationMicroSeconds sql.NullInt64
+	Status               sql.NullString
 
-	ScannedRows             int64
-	ScannedBytes            int64
-	InsertedRows            int64
-	InsertedBytes           int64
-	SpilledBytes            int64
-	ReturnedRows            int64
-	ReturnedBytes           int64
-	TimeInQueueMicroSeconds int64
+	ScannedRows             sql.NullInt64
+	ScannedBytes            sql.NullInt64
+	InsertedRows            sql.NullInt64
+	InsertedBytes           sql.NullInt64
+	SpilledBytes            sql.NullInt64
+	ReturnedRows            sql.NullInt64
+	ReturnedBytes           sql.NullInt64
+	TimeInQueueMicroSeconds sql.NullInt64
 }

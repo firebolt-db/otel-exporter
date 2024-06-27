@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"database/sql"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -64,13 +65,13 @@ func Test_Collector_Start(t *testing.T) {
 	go func() {
 		rCh <- fetcher.EngineRuntimePoint{
 			EngineName: "eng1",
-			EventTime:  time.Now(),
-			CPUUsed:    10,
+			EventTime:  sql.Null[time.Time]{Valid: true, V: time.Now()},
+			CPUUsed:    sql.NullFloat64{Valid: true, Float64: 10},
 		}
 
 		qhCh <- fetcher.QueryHistoryPoint{
 			EngineName:           "eng2",
-			DurationMicroSeconds: 10,
+			DurationMicroSeconds: sql.NullInt64{Valid: true, Int64: 10},
 		}
 		sentCh <- struct{}{}
 	}()
