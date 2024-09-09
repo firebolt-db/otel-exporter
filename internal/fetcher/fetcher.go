@@ -223,16 +223,16 @@ func (f *fetcher) connect(ctx context.Context, accountName string, engineName st
 
 	// switch to the engine if engineName is provided
 	if engineName != "" {
-		// prevent engine from auto stopping caused by exporter queries
-		_, err = db.ExecContext(ctx, `SET auto_start_stop_control=ignore;`)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set auto_start_stop_control = ignore for engine %s: %w", engineName, err)
-		}
-
 		// switch to an engine
 		_, err = db.ExecContext(ctx, fmt.Sprintf(`USE ENGINE "%s";`, engineName))
 		if err != nil {
 			return nil, fmt.Errorf("failed to switch to engine %s: %w", engineName, err)
+		}
+
+		// prevent engine from auto stopping caused by exporter queries
+		_, err = db.ExecContext(ctx, `SET auto_start_stop_control=ignore;`)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set auto_start_stop_control = ignore for engine %s: %w", engineName, err)
 		}
 
 		// add a query label to appear in query history
