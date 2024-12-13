@@ -56,32 +56,32 @@ func Test_NewCollector_missing_exporter(t *testing.T) {
 }
 
 type fetcherMock struct {
-	fetchEnginesFn            func(ctx context.Context, accountName string) ([]string, error)
-	fetchRuntimePointsFn      func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.EngineRuntimePoint
-	fetchQueryHistoryPointsFn func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.QueryHistoryPoint
+	fetchEnginesFn            func(ctx context.Context, accountName string) ([]fetcher.Engine, error)
+	fetchRuntimePointsFn      func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint
+	fetchQueryHistoryPointsFn func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint
 }
 
 func newFetcherMock() *fetcherMock {
 	return &fetcherMock{
-		fetchEnginesFn: func(ctx context.Context, accountName string) ([]string, error) {
+		fetchEnginesFn: func(ctx context.Context, accountName string) ([]fetcher.Engine, error) {
 			panic("default FetchEngines")
 		},
-		fetchRuntimePointsFn: func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
+		fetchRuntimePointsFn: func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
 			panic("default FetchRuntimePoints")
 		},
-		fetchQueryHistoryPointsFn: func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
+		fetchQueryHistoryPointsFn: func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 			panic("default FetchQueryHistoryPoints")
 		},
 	}
 }
 
-func (m *fetcherMock) FetchEngines(ctx context.Context, accountName string) ([]string, error) {
+func (m *fetcherMock) FetchEngines(ctx context.Context, accountName string) ([]fetcher.Engine, error) {
 	return m.fetchEnginesFn(ctx, accountName)
 }
-func (m *fetcherMock) FetchRuntimePoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
+func (m *fetcherMock) FetchRuntimePoints(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
 	return m.fetchRuntimePointsFn(ctx, account, engines, since, till)
 }
-func (m *fetcherMock) FetchQueryHistoryPoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
+func (m *fetcherMock) FetchQueryHistoryPoints(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 	return m.fetchQueryHistoryPointsFn(ctx, account, engines, since, till)
 }
 

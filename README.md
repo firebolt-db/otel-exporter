@@ -36,7 +36,7 @@ docker run --name firebolt-otel-exporter \
   -e FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS=127.0.0.1:4317 \
   -e FIREBOLT_OTEL_EXPORTER_LOG_LEVEL=debug \
   --network="host" \
-ghcr.io/firebolt-db/otel-exporter:v0.0.5
+ghcr.io/firebolt-db/otel-exporter:v0.0.6
 ```
 
 Meters and instruments
@@ -59,6 +59,7 @@ The exporter's structure of meters and instruments is described below. See [OTLP
 All the instruments in this meter have the following attributes:
  - `firebolt.account.name` - name of the account
  - `firebolt.engine.name` - name of the engine
+ - `firebolt.engine.status` - status of the engine (possible statuses are `RUNNING`, `RESIZING`, `DRAINING`)
 
 ### Meter name: `firebolt.engine.query_history`
 
@@ -79,6 +80,7 @@ All the instruments in this meter have the following attributes:
 - `firebolt.engine.name` - name of the engine
 - `firebolt.user.name` - name of the user executing query
 - `firebolt.query.status` - status of the query
+- `firebolt.engine.status` - status of the engine (possible statuses are `RUNNING`, `RESIZING`, `DRAINING`)
 
 ### Meter name: `firebolt.exporter`
 

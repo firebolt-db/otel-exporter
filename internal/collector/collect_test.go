@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
-	semconv "go.opentelemetry.io/otel/semconv/v1.25.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 
 	"github.com/firebolt-db/otel-exporter/internal/fetcher"
 )
@@ -29,19 +29,22 @@ func Test_Collector_Start(t *testing.T) {
 
 	interval := 25 * time.Millisecond
 
-	eng := []string{"engine1", "engine2"}
-	f.fetchEnginesFn = func(ctx context.Context, accountName string) ([]string, error) {
+	eng := []fetcher.Engine{
+		{Name: "engine1", Status: "RUNNING"},
+		{Name: "engine2", Status: "RESIZING"},
+	}
+	f.fetchEnginesFn = func(ctx context.Context, accountName string) ([]fetcher.Engine, error) {
 		require.Equal(t, acctName, accountName)
 		return eng, nil
 	}
 	rCh := make(chan fetcher.EngineRuntimePoint)
-	f.fetchRuntimePointsFn = func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
+	f.fetchRuntimePointsFn = func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint {
 		require.Equal(t, acctName, account)
 		require.Equal(t, eng, engines)
 		return rCh
 	}
 	qhCh := make(chan fetcher.QueryHistoryPoint)
-	f.fetchQueryHistoryPointsFn = func(ctx context.Context, account string, engines []string, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
+	f.fetchQueryHistoryPointsFn = func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 		require.Equal(t, acctName, account)
 		require.Equal(t, eng, engines)
 		return qhCh
@@ -64,13 +67,15 @@ func Test_Collector_Start(t *testing.T) {
 	sentCh := make(chan struct{})
 	go func() {
 		rCh <- fetcher.EngineRuntimePoint{
-			EngineName: "eng1",
-			EventTime:  sql.Null[time.Time]{Valid: true, V: time.Now()},
-			CPUUsed:    sql.NullFloat64{Valid: true, Float64: 10},
+			EngineName:   "eng1",
+			EngineStatus: "RUNNING",
+			EventTime:    sql.Null[time.Time]{Valid: true, V: time.Now()},
+			CPUUsed:      sql.NullFloat64{Valid: true, Float64: 10},
 		}
 
 		qhCh <- fetcher.QueryHistoryPoint{
 			EngineName:           "eng2",
+			EngineStatus:         "RESIZING",
 			DurationMicroSeconds: sql.NullInt64{Valid: true, Int64: 10},
 		}
 		sentCh <- struct{}{}
