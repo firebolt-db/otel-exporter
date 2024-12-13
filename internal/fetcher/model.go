@@ -5,9 +5,16 @@ import (
 	"time"
 )
 
+// Engine represents an engine entry, on which metrics are collected
+type Engine struct {
+	Name   string
+	Status string
+}
+
 // EngineRuntimePoint represents a snapshot point of engine runtime metrics.
 type EngineRuntimePoint struct {
-	EngineName string
+	EngineName   string
+	EngineStatus string
 
 	EngineCluster    sql.NullString
 	EventTime        sql.Null[time.Time]
@@ -37,7 +44,8 @@ func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 
 // QueryHistoryPoint represents a snapshot point of query history metrics for a single query.
 type QueryHistoryPoint struct {
-	EngineName string
+	EngineName   string
+	EngineStatus string
 
 	AccountName sql.NullString
 	UserName    sql.NullString

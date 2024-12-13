@@ -15,17 +15,17 @@ import (
 // Fetcher is an interface that the metrics fetcher should implement.
 type Fetcher interface {
 	// FetchEngines reads a list of running engines in a single account.
-	FetchEngines(ctx context.Context, accountName string) ([]string, error)
+	FetchEngines(ctx context.Context, accountName string) ([]Engine, error)
 
 	// FetchRuntimePoints returns a channel of EngineRuntimePoint and pushes data into that channel asynchronously.
 	// It should close the channel when all data points are pushed.
 	// The metrics should be collected within the provided time interval.
-	FetchRuntimePoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan EngineRuntimePoint
+	FetchRuntimePoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan EngineRuntimePoint
 
 	// FetchQueryHistoryPoints returns a channel of QueryHistoryPoint and pushes data into that channel asynchronously
 	// It should close the channel when all data points are pushed.
 	// The metrics should be collected within the provided time interval.
-	FetchQueryHistoryPoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan QueryHistoryPoint
+	FetchQueryHistoryPoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan QueryHistoryPoint
 }
 
 // fetcher is an implementation of Fetcher interface.
@@ -42,7 +42,7 @@ func New(clientID, clientSecret string) Fetcher {
 }
 
 // FetchEngines returns a list of running engines in account.
-func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]string, error) {
+func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]Engine, error) {
 	// connect to a system engine to read running engines.
 	db, err := f.connect(ctx, accountName, "")
 	if err != nil {
@@ -52,46 +52,48 @@ func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]strin
 	defer db.Close()
 
 	// we are only interested in running engines.
-	rows, err := db.QueryContext(ctx, "SELECT engine_name FROM information_schema.engines WHERE status = 'RUNNING';")
+	rows, err := db.QueryContext(ctx,
+		`SELECT engine_name, status FROM information_schema.engines WHERE status IN ('RUNNING', 'RESIZING', 'DRAINING');`,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	var engines []string
+	var engines []Engine
 
 	for rows.Next() {
-		var engineName string
-		if err := rows.Scan(&engineName); err != nil {
+		var engine Engine
+		if err := rows.Scan(&engine.Name, &engine.Status); err != nil {
 			return nil, err
 		}
 
-		engines = append(engines, engineName)
+		engines = append(engines, engine)
 	}
 
 	return engines, nil
 }
 
 // FetchRuntimePoints returns a channel of EngineRuntimePoint.
-func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan EngineRuntimePoint {
+func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan EngineRuntimePoint {
 	ch := make(chan EngineRuntimePoint)
 
 	go func() {
 		wg := sync.WaitGroup{}
 
 		// metrics for each engine are scanned async.
-		for _, engine := range engines {
+		for _, eng := range engines {
 			wg.Add(1)
 
-			go func(engineName string) {
+			go func(engine Engine) {
 				defer wg.Done()
 
 				// connect to an engine
-				engDb, err := f.connect(ctx, account, engineName)
+				engDb, err := f.connect(ctx, account, engine.Name)
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
-						slog.String("accountName", account), slog.String("engineName", engineName),
+						slog.String("accountName", account), slog.String("engineName", engine.Name),
 						slog.Any("error", err),
 					)
 					return
@@ -110,11 +112,14 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 					))
 
 				// prepare the metric point.
-				erp := EngineRuntimePoint{EngineName: engineName}
+				erp := EngineRuntimePoint{
+					EngineName:   engine.Name,
+					EngineStatus: engine.Status,
+				}
 				if err := erp.Scan(row); err != nil {
 					if !errors.Is(err, sql.ErrNoRows) {
 						slog.ErrorContext(ctx, "failed to scan engine metric",
-							slog.String("accountName", account), slog.String("engineName", engineName),
+							slog.String("accountName", account), slog.String("engineName", engine.Name),
 							slog.Any("error", err),
 						)
 					}
@@ -122,7 +127,7 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 				}
 
 				ch <- erp
-			}(engine)
+			}(eng)
 		}
 
 		// wait until all engines metrics are pushed and close the channel
@@ -134,24 +139,24 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 }
 
 // FetchQueryHistoryPoints returns a channel of QueryHistoryPoint.
-func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, engines []string, since, till time.Time) <-chan QueryHistoryPoint {
+func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan QueryHistoryPoint {
 	ch := make(chan QueryHistoryPoint)
 
 	go func() {
 		wg := sync.WaitGroup{}
 
 		// metrics for each engine are scanned async.
-		for _, engine := range engines {
+		for _, eng := range engines {
 			wg.Add(1)
 
-			go func(engineName string) {
+			go func(engine Engine) {
 				defer wg.Done()
 
 				// connect to an engine
-				engDb, err := f.connect(ctx, account, engineName)
+				engDb, err := f.connect(ctx, account, engine.Name)
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
-						slog.String("accountName", account), slog.String("engineName", engineName),
+						slog.String("accountName", account), slog.String("engineName", engine.Name),
 						slog.Any("error", err),
 					)
 					return
@@ -173,7 +178,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				)
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to read query history metrics",
-						slog.String("accountName", account), slog.String("engineName", engineName),
+						slog.String("accountName", account), slog.String("engineName", engine.Name),
 						slog.Any("error", err),
 					)
 					return
@@ -183,14 +188,17 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 
 				// prepare the metric point. There can be multiple queries in history.
 				for rows.Next() {
-					qhp := QueryHistoryPoint{EngineName: engineName}
+					qhp := QueryHistoryPoint{
+						EngineName:   engine.Name,
+						EngineStatus: engine.Status,
+					}
 
 					if err := rows.Scan(&qhp.AccountName, &qhp.UserName, &qhp.DurationMicroSeconds, &qhp.Status,
 						&qhp.ScannedRows, &qhp.ScannedBytes, &qhp.InsertedRows, &qhp.InsertedBytes, &qhp.SpilledBytes,
 						&qhp.ReturnedRows, &qhp.ReturnedBytes, &qhp.TimeInQueueMicroSeconds,
 					); err != nil {
 						slog.ErrorContext(ctx, "failed to scan query history metric",
-							slog.String("accountName", account), slog.String("engineName", engineName),
+							slog.String("accountName", account), slog.String("engineName", engine.Name),
 							slog.Any("error", err),
 						)
 						return
@@ -198,7 +206,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 
 					ch <- qhp
 				}
-			}(engine)
+			}(eng)
 		}
 
 		// wait until all engines metrics are pushed and close the channel
