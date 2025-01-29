@@ -26,6 +26,8 @@ type Fetcher interface {
 	// It should close the channel when all data points are pushed.
 	// The metrics should be collected within the provided time interval.
 	FetchQueryHistoryPoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan QueryHistoryPoint
+
+	FetchTableHistoryPoints(ctx context.Context, account string, engines []Engine, database string) <-chan TableHistoryPoint
 }
 
 // fetcher is an implementation of Fetcher interface.
@@ -44,7 +46,7 @@ func New(clientID, clientSecret string) Fetcher {
 // FetchEngines returns a list of running engines in account.
 func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]Engine, error) {
 	// connect to a system engine to read running engines.
-	db, err := f.connect(ctx, accountName, "")
+	db, err := f.connect(ctx, accountName, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,7 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 				defer wg.Done()
 
 				// connect to an engine
-				engDb, err := f.connect(ctx, account, engine.Name)
+				engDb, err := f.connect(ctx, account, engine.Name, "")
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
 						slog.String("accountName", account), slog.String("engineName", engine.Name),
@@ -153,7 +155,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				defer wg.Done()
 
 				// connect to an engine
-				engDb, err := f.connect(ctx, account, engine.Name)
+				engDb, err := f.connect(ctx, account, engine.Name, "")
 				if err != nil {
 					slog.ErrorContext(ctx, "failed to connect to engine",
 						slog.String("accountName", account), slog.String("engineName", engine.Name),
@@ -217,9 +219,78 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 	return ch
 }
 
+func (f *fetcher) FetchTableHistoryPoints(ctx context.Context, account string, engines []Engine, database string) <-chan TableHistoryPoint {
+	ch := make(chan TableHistoryPoint)
+
+	go func() {
+		wg := sync.WaitGroup{}
+
+		// We actually only want to run this once, but reading from tables
+		// does not work with the system engine. And since our user will only
+		//have access to one engine this will work as intended.
+		for _, eng := range engines {
+			wg.Add(1)
+
+			go func(engine Engine) {
+				defer wg.Done()
+				// connect to system engine
+				engDb, err := f.connect(ctx, account, engine.Name, database)
+				if err != nil {
+					slog.ErrorContext(ctx, "failed to connect to engine when reading table metrics",
+						slog.String("accountName", account),
+						slog.String("engineName", engine.Name),
+						slog.Any("error", err),
+					)
+					return
+				}
+				defer engDb.Close()
+
+				rows, err := engDb.QueryContext(ctx,
+					`SELECT
+						table_name, number_of_rows, compressed_bytes, uncompressed_bytes, compression_ratio, number_of_tablets, fragmentation
+					FROM information_schema.tables
+					WHERE table_type = 'BASE TABLE'
+					ORDER BY table_name;`,
+				)
+				if err != nil {
+					slog.ErrorContext(ctx, "failed to read table history metrics",
+						slog.String("accountName", account),
+						slog.Any("error", err),
+					)
+					return
+				}
+				slog.DebugContext(ctx, "Exectugin done table metrics query", slog.Any("rows", rows))
+
+				defer rows.Close()
+
+				for rows.Next() {
+					thp := TableHistoryPoint{}
+					if err := rows.Scan(&thp.TableName, &thp.NumberOfRows, &thp.CompressedBytes, &thp.UncompressedBytes,
+						&thp.CompressionRatio, &thp.NumberOfTablets, &thp.Fragmentation); err != nil {
+						slog.ErrorContext(ctx, "failed to scan table history metric",
+							slog.String("accountName", account),
+							slog.String("engineName", engine.Name),
+							slog.Any("error", err),
+						)
+						return
+					}
+
+					ch <- thp
+				}
+			}(eng)
+		}
+
+		// wait until all engines metrics are pushed and close the channel
+		wg.Wait()
+		close(ch)
+	}()
+
+	return ch
+}
+
 // connect returns a sql.DB instance for specified account and engine. In case engine name is not provided, it will connect
 // to a system engine.
-func (f *fetcher) connect(ctx context.Context, accountName string, engineName string) (*sql.DB, error) {
+func (f *fetcher) connect(ctx context.Context, accountName string, engineName string, database string) (*sql.DB, error) {
 	dsn := fmt.Sprintf("firebolt://?account_name=%s&client_id=%s&client_secret=%s",
 		accountName, f.clientID, f.clientSecret,
 	)
@@ -250,5 +321,12 @@ func (f *fetcher) connect(ctx context.Context, accountName string, engineName st
 		}
 	}
 
+	if database != "" {
+		// switch to database
+		_, err = db.ExecContext(ctx, fmt.Sprintf(`USE DATABASE "%s";`, database))
+		if err != nil {
+			return nil, fmt.Errorf("failed to switch to database %s: %w", database, err)
+		}
+	}
 	return db, nil
 }

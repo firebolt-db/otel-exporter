@@ -93,5 +93,5 @@ func (a *app) run(cliCtx *cli.Context) error {
 	}()
 
 	// start the regular collecting routine
-	return col.Start(ctx, a.cfg.CollectInterval)
+	return col.Start(ctx, a.cfg.CollectInterval, a.cfg.Database)
 }

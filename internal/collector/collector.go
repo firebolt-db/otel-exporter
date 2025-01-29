@@ -16,7 +16,7 @@ type Collector interface {
 	// Close should be called to clean up allocated resources
 	Close(ctx context.Context) error
 	// Start is a blocking function which should run the main collector's process
-	Start(ctx context.Context, interval time.Duration) error
+	Start(ctx context.Context, interval time.Duration, database string) error
 }
 
 // collector is an implementation of Collector interface.
@@ -29,6 +29,7 @@ type collector struct {
 
 	runtimeMetrics      *runtimeMetrics
 	queryHistoryMetrics *queryHistoryMetrics
+	tableHistoryMetrics *tableHistoryMetrics
 	exporterMetrics     *exporterMetrics
 
 	lastCollectedTime time.Time
@@ -83,6 +84,10 @@ func (c *collector) setupMetrics() error {
 	}
 
 	if err := c.setupQueryHistoryMetrics(); err != nil {
+		return err
+	}
+
+	if err := c.setupTableHistoryMetrics(); err != nil {
 		return err
 	}
 

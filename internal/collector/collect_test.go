@@ -19,6 +19,7 @@ func Test_Collector_Start(t *testing.T) {
 	t.Parallel()
 
 	acctName := "acct"
+	databaseName := "test_db"
 	f := newFetcherMock()
 	exp := newExporterMock()
 	c, err := NewCollector(f, []string{acctName}, WithExporter(exp), WithExportInterval(30*time.Millisecond))
@@ -49,6 +50,15 @@ func Test_Collector_Start(t *testing.T) {
 		require.Equal(t, eng, engines)
 		return qhCh
 	}
+
+	thCh := make(chan fetcher.TableHistoryPoint)
+	f.fetchTableHistoryPointsFn = func(ctx context.Context, account string, engines []fetcher.Engine, database string) <-chan fetcher.TableHistoryPoint {
+		require.Equal(t, acctName, account)
+		require.Equal(t, eng, engines)
+		require.Equal(t, databaseName, database)
+		return thCh
+	}
+
 	exportCalled := atomic.Bool{}
 	exportCalled.Store(false)
 	exp.exportFn = func(ctx context.Context, metrics *metricdata.ResourceMetrics) error {
@@ -78,12 +88,21 @@ func Test_Collector_Start(t *testing.T) {
 			EngineStatus:         "RESIZING",
 			DurationMicroSeconds: sql.NullInt64{Valid: true, Int64: 10},
 		}
+		thCh <- fetcher.TableHistoryPoint{
+			TableName:         "test",
+			NumberOfRows:      sql.NullInt64{Int64: 1},
+			CompressedBytes:   sql.NullInt64{Int64: 1},
+			UncompressedBytes: sql.NullInt64{Int64: 2},
+			CompressionRatio:  sql.NullFloat64{Float64: 0.5},
+			NumberOfTablets:   sql.NullInt64{Int64: 1},
+			Fragmentation:     sql.NullFloat64{Float64: 0.0},
+		}
 		sentCh <- struct{}{}
 	}()
 
 	doneCh := make(chan struct{})
 	go func() {
-		err := c.Start(ctx, interval)
+		err := c.Start(ctx, interval, databaseName)
 		require.NoError(t, err)
 		doneCh <- struct{}{}
 	}()
@@ -91,6 +110,7 @@ func Test_Collector_Start(t *testing.T) {
 	<-sentCh
 	close(rCh)
 	close(qhCh)
+	close(thCh)
 	<-doneCh
 
 	require.Eventually(t, func() bool {

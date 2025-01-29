@@ -62,3 +62,14 @@ type QueryHistoryPoint struct {
 	ReturnedBytes           sql.NullInt64
 	TimeInQueueMicroSeconds sql.NullInt64
 }
+
+type TableHistoryPoint struct {
+	TableName string
+
+	NumberOfRows      sql.NullInt64
+	CompressedBytes   sql.NullInt64
+	UncompressedBytes sql.NullInt64
+	CompressionRatio  sql.NullFloat64
+	NumberOfTablets   sql.NullInt64
+	Fragmentation     sql.NullFloat64
+}

@@ -14,17 +14,18 @@ import (
 
 // collectorFn is a function which is responsible for collecting metrics in a single account, with list of engines.
 // It is expected that collectorFn will only collect metrics in time interval between `since` and `till`.
-type collectorFn func(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time)
+type collectorFn func(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time, database string)
 
 // Start runs main metrics collection routine with specified interval.
 // Start will block until provided context is done, or the app is closed.
-func (c *collector) Start(ctx context.Context, interval time.Duration) error {
+func (c *collector) Start(ctx context.Context, interval time.Duration, database string) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	collectors := []collectorFn{
 		c.collectRuntimeMetrics,
 		c.collectQueryHistoryMetrics,
+		c.collectTableHistoryMetrics,
 	}
 
 	for {
@@ -55,7 +56,7 @@ func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 
 				// run all collectors for the account in parallel
 				for _, colFn := range collectors {
-					go colFn(ctx, wg, acctName, engines, since, collectTime)
+					go colFn(ctx, wg, acctName, engines, since, collectTime, database)
 				}
 
 				wg.Wait()
@@ -82,7 +83,7 @@ func (c *collector) reportExporterDuration(ctx context.Context, startTime time.T
 }
 
 // collectRuntimeMetrics collects and reports engine runtime metrics, such as cpu utilization, memory utilization etc.
-func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time) {
+func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time, database string) {
 	slog.DebugContext(ctx, "start collecting runtime metrics", slog.String("accountName", accountName))
 
 	pointsCh := c.fetcher.FetchRuntimePoints(ctx, accountName, engines, since, till)
@@ -111,7 +112,7 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 }
 
 // collectQueryHistoryMetrics collects and reports query history metrics, such as rows and bytes scanned, etc.
-func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time) {
+func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time, database string) {
 	slog.DebugContext(ctx, "start collecting query history metrics", slog.String("accountName", accountName))
 
 	pointsCh := c.fetcher.FetchQueryHistoryPoints(ctx, accountName, engines, since, till)
@@ -141,4 +142,30 @@ func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.Wai
 	wg.Done()
 
 	slog.DebugContext(ctx, "collecting query history metrics routine finished", slog.String("accountName", accountName))
+}
+
+func (c *collector) collectTableHistoryMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time, database string) {
+	slog.DebugContext(ctx, "start collecting table history metrics", slog.String("accountName", accountName))
+
+	pointsCh := c.fetcher.FetchTableHistoryPoints(ctx, accountName, engines, database)
+
+	for mp := range pointsCh {
+		attrs := []attribute.KeyValue{
+			attribute.Key("firebolt.account.name").String(accountName),
+			attribute.Key("firebolt.table.name").String(mp.TableName),
+		}
+
+		attrsSet := attribute.NewSet(attrs...)
+
+		c.tableHistoryMetrics.numberOfRows.Record(ctx, mp.NumberOfRows.Int64, api.WithAttributeSet(attrsSet))
+		c.tableHistoryMetrics.compressedBytes.Record(ctx, mp.CompressedBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.tableHistoryMetrics.uncompressedBytes.Record(ctx, mp.UncompressedBytes.Int64, api.WithAttributeSet(attrsSet))
+		c.tableHistoryMetrics.compressionRatio.Record(ctx, mp.CompressionRatio.Float64, api.WithAttributeSet(attrsSet))
+		c.tableHistoryMetrics.numberOfTablets.Record(ctx, mp.NumberOfTablets.Int64, api.WithAttributeSet(attrsSet))
+		c.tableHistoryMetrics.fragmentation.Record(ctx, mp.Fragmentation.Float64, api.WithAttributeSet(attrsSet))
+	}
+
+	wg.Done()
+
+	slog.DebugContext(ctx, "collecting table history metrics routine finished", slog.String("accountName", accountName))
 }

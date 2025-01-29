@@ -31,6 +31,9 @@ type Config struct {
 	// CollectInterval specifies how often otel-exporter will collect metrics from Firebolt. It will also define
 	// a discretion step of reported metrics.
 	CollectInterval time.Duration `env:"FIREBOLT_OTEL_EXPORTER_COLLECT_INTERVAL,default=30s"`
+
+	// Database for which table metrics will be fetched
+	Database string `env:"FIREBOLT_OTEL_EXPORTER_DATABASE"`
 }
 
 // Validate validates Config
@@ -43,6 +46,7 @@ func (c Config) Validate() error {
 		validation.Field(&c.Exporter),
 		// Minimal allowed collect interval is 15s.
 		validation.Field(&c.CollectInterval, validation.Required, validation.Min(15*time.Second)),
+		validation.Field(&c.Database, validation.Required),
 	)
 }
 

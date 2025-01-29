@@ -59,6 +59,7 @@ type fetcherMock struct {
 	fetchEnginesFn            func(ctx context.Context, accountName string) ([]fetcher.Engine, error)
 	fetchRuntimePointsFn      func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint
 	fetchQueryHistoryPointsFn func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint
+	fetchTableHistoryPointsFn func(ctx context.Context, account string, engines []fetcher.Engine, database string) <-chan fetcher.TableHistoryPoint
 }
 
 func newFetcherMock() *fetcherMock {
@@ -72,6 +73,9 @@ func newFetcherMock() *fetcherMock {
 		fetchQueryHistoryPointsFn: func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 			panic("default FetchQueryHistoryPoints")
 		},
+		fetchTableHistoryPointsFn: func(ctx context.Context, account string, engines []fetcher.Engine, database string) <-chan fetcher.TableHistoryPoint {
+			panic("default FetchTableHistoryPoints")
+		},
 	}
 }
 
@@ -83,6 +87,10 @@ func (m *fetcherMock) FetchRuntimePoints(ctx context.Context, account string, en
 }
 func (m *fetcherMock) FetchQueryHistoryPoints(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 	return m.fetchQueryHistoryPointsFn(ctx, account, engines, since, till)
+}
+
+func (m *fetcherMock) FetchTableHistoryPoints(ctx context.Context, account string, engines []fetcher.Engine, database string) <-chan fetcher.TableHistoryPoint {
+	return m.fetchTableHistoryPointsFn(ctx, account, engines, database)
 }
 
 type exporterMock struct {

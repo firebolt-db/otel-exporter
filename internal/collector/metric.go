@@ -30,6 +30,16 @@ type queryHistoryMetrics struct {
 	queueTime metric.Float64Counter
 }
 
+type tableHistoryMetrics struct {
+	numberOfRows      metric.Int64Gauge
+	compressedBytes   metric.Int64Gauge
+	uncompressedBytes metric.Int64Gauge
+	numberOfTablets   metric.Int64Gauge
+
+	compressionRatio metric.Float64Gauge
+	fragmentation    metric.Float64Gauge
+}
+
 // exporterMetrics specifies a set of supplementary metrics of otel-exporter.
 type exporterMetrics struct {
 	duration metric.Float64Counter
@@ -198,6 +208,68 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	}
 
 	c.queryHistoryMetrics = qhm
+	return nil
+}
+
+func (c *collector) setupTableHistoryMetrics() error {
+	meter := c.meterProvider.Meter("firebolt.engine.table_history")
+
+	var err error
+	thm := &tableHistoryMetrics{}
+
+	thm.numberOfRows, err = meter.Int64Gauge(
+		"firebolt.table.number_of_rows",
+		metric.WithDescription("The number of rows in the table."),
+		metric.WithUnit("{row}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	thm.compressedBytes, err = meter.Int64Gauge(
+		"firebolt.table.compressed_bytes",
+		metric.WithDescription("The compressed size of the table in bytes."),
+		metric.WithUnit("bytes"),
+	)
+	if err != nil {
+		return err
+	}
+
+	thm.uncompressedBytes, err = meter.Int64Gauge(
+		"firebolt.table.uncompressed_bytes",
+		metric.WithDescription("The uncompressed size of the table in bytes."),
+		metric.WithUnit("bytes"),
+	)
+	if err != nil {
+		return err
+	}
+
+	thm.compressionRatio, err = meter.Float64Gauge(
+		"firebolt.table.compression_ratio.rows",
+		metric.WithDescription("The compression ratio (<uncompressed_bytes>/<compressed_bytes>)."),
+	)
+	if err != nil {
+		return err
+	}
+
+	thm.numberOfTablets, err = meter.Int64Gauge(
+		"firebolt.table.number_of_tablets",
+		metric.WithDescription("The number of tablets comprising the table."),
+		metric.WithUnit("{count}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	thm.fragmentation, err = meter.Float64Gauge(
+		"firebolt.table.fragmentation",
+		metric.WithDescription("Table fragmentation percentage (between 0-1)."),
+	)
+	if err != nil {
+		return err
+	}
+
+	c.tableHistoryMetrics = thm
 	return nil
 }
 
