@@ -40,7 +40,7 @@ func Test_NewCollector(t *testing.T) {
 	require.NotNil(t, c.queryHistoryMetrics.returnedBytes)
 	require.NotNil(t, c.queryHistoryMetrics.spilledBytes)
 	require.NotNil(t, c.queryHistoryMetrics.queueTime)
-	require.NotNil(t, c.queryHistoryMetrics.gatewayTime)
+	require.NotNil(t, c.queryHistoryMetrics.queryGatewayDuration)
 
 	require.NotNil(t, c.exporterMetrics)
 	require.NotNil(t, c.exporterMetrics.duration)

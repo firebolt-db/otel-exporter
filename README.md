@@ -63,18 +63,18 @@ All the instruments in this meter have the following attributes:
 
 ### Meter name: `firebolt.engine.query_history`
 
-| Instrument                    | Type             | Description                                                     |
-|-------------------------------|------------------|-----------------------------------------------------------------|
-| firebolt.query.duration       | Float64Histogram | Duration of query execution (second)                            |
-| firebolt.query.scanned.rows   | Int64Counter     | The total number of rows scanned                                |
-| firebolt.query.scanned.bytes  | Int64Counter     | The total number of bytes scanned (both from cache and storage) |
-| firebolt.query.insert.rows    | Int64Counter     | The total number of rows written                                |
-| firebolt.query.insert.bytes   | Int64Counter     | The total number of bytes written (both to cache and storage)   |
-| firebolt.query.returned.rows  | Int64Counter     | The total number of rows returned from the query                |
-| firebolt.query.returned.bytes | Int64Counter     | The total number of bytes returned from the query               |
-| firebolt.query.spilled.bytes  | Int64Counter     | The total number of bytes spilled (uncompressed)                |
-| firebolt.query.queue.time     | Float64Counter   | Time the query spent in queue                                   |
-| firebolt.query.gateway.time   | Float64Histogram | End to end time the query spent in the gateway                  |
+| Instrument                      | Type             | Description                                                     |
+|---------------------------------|------------------|-----------------------------------------------------------------|
+| firebolt.query.duration         | Float64Histogram | Duration of query execution (second)                            |
+| firebolt.query.scanned.rows     | Int64Counter     | The total number of rows scanned                                |
+| firebolt.query.scanned.bytes    | Int64Counter     | The total number of bytes scanned (both from cache and storage) |
+| firebolt.query.insert.rows      | Int64Counter     | The total number of rows written                                |
+| firebolt.query.insert.bytes     | Int64Counter     | The total number of bytes written (both to cache and storage)   |
+| firebolt.query.returned.rows    | Int64Counter     | The total number of rows returned from the query                |
+| firebolt.query.returned.bytes   | Int64Counter     | The total number of bytes returned from the query               |
+| firebolt.query.spilled.bytes    | Int64Counter     | The total number of bytes spilled (uncompressed)                |
+| firebolt.query.queue.time       | Float64Counter   | Time the query spent in queue                                   |
+| firebolt.query.gateway.duration | Float64Histogram | End to end time the query spent in the gateway (second)         |
 
 All the instruments in this meter have the following attributes:
 - `firebolt.account.name` - name of the account
