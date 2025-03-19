@@ -27,8 +27,8 @@ type queryHistoryMetrics struct {
 	returnedBytes metric.Int64Counter
 	spilledBytes  metric.Int64Counter
 
-	queueTime   metric.Float64Counter
-	gatewayTime metric.Float64Histogram
+	queueTime            metric.Float64Counter
+	queryGatewayDuration metric.Float64Histogram
 }
 
 // exporterMetrics specifies a set of supplementary metrics of otel-exporter.
@@ -198,8 +198,8 @@ func (c *collector) setupQueryHistoryMetrics() error {
 		return err
 	}
 
-	qhm.gatewayTime, err = meter.Float64Histogram(
-		"firebolt.query.gateway.time",
+	qhm.queryGatewayDuration, err = meter.Float64Histogram(
+		"firebolt.query.gateway.duration",
 		metric.WithDescription("End to end time the query spent in the gateway"),
 		metric.WithUnit("second"),
 	)
