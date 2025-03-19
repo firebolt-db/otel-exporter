@@ -53,12 +53,13 @@ type QueryHistoryPoint struct {
 	DurationMicroSeconds sql.NullInt64
 	Status               sql.NullString
 
-	ScannedRows             sql.NullInt64
-	ScannedBytes            sql.NullInt64
-	InsertedRows            sql.NullInt64
-	InsertedBytes           sql.NullInt64
-	SpilledBytes            sql.NullInt64
-	ReturnedRows            sql.NullInt64
-	ReturnedBytes           sql.NullInt64
-	TimeInQueueMicroSeconds sql.NullInt64
+	ScannedRows                 sql.NullInt64
+	ScannedBytes                sql.NullInt64
+	InsertedRows                sql.NullInt64
+	InsertedBytes               sql.NullInt64
+	SpilledBytes                sql.NullInt64
+	ReturnedRows                sql.NullInt64
+	ReturnedBytes               sql.NullInt64
+	TimeInQueueMicroSeconds     sql.NullInt64
+	GatewayDurationMicroSeconds sql.NullInt64
 }
