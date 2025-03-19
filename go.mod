@@ -1,6 +1,6 @@
 module github.com/firebolt-db/otel-exporter
 
-go 1.23.1
+go 1.24
 
 require (
 	github.com/firebolt-db/firebolt-go-sdk v1.4.0
