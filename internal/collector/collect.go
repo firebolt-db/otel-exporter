@@ -136,6 +136,7 @@ func (c *collector) collectQueryHistoryMetrics(ctx context.Context, wg *sync.Wai
 		c.queryHistoryMetrics.returnedBytes.Add(ctx, mp.ReturnedBytes.Int64, api.WithAttributeSet(attrsSet))
 		c.queryHistoryMetrics.spilledBytes.Add(ctx, mp.SpilledBytes.Int64, api.WithAttributeSet(attrsSet))
 		c.queryHistoryMetrics.queueTime.Add(ctx, float64(mp.TimeInQueueMicroSeconds.Int64)/1000000, api.WithAttributeSet(attrsSet))
+		c.queryHistoryMetrics.gatewayTime.Record(ctx, float64(mp.GatewayDurationMicroSeconds.Int64)/1000000, api.WithAttributeSet(attrsSet))
 	}
 
 	wg.Done()

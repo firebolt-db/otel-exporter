@@ -168,7 +168,8 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				rows, err := engDb.QueryContext(ctx,
 					fmt.Sprintf(
 						`SELECT account_name, user_name, duration_us, status, scanned_rows, scanned_bytes, 
-       						inserted_rows, inserted_bytes, spilled_bytes, returned_rows, returned_bytes, time_in_queue_us 
+       						inserted_rows, inserted_bytes, spilled_bytes, returned_rows, returned_bytes, 
+							time_in_queue_us, e2e_duration_us
 					FROM information_schema.engine_query_history
 					WHERE status <> 'STARTED_EXECUTION' 
 						AND submitted_time > TIMESTAMPTZ '%s' AND submitted_time <= TIMESTAMPTZ '%s' 
@@ -195,7 +196,7 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 
 					if err := rows.Scan(&qhp.AccountName, &qhp.UserName, &qhp.DurationMicroSeconds, &qhp.Status,
 						&qhp.ScannedRows, &qhp.ScannedBytes, &qhp.InsertedRows, &qhp.InsertedBytes, &qhp.SpilledBytes,
-						&qhp.ReturnedRows, &qhp.ReturnedBytes, &qhp.TimeInQueueMicroSeconds,
+						&qhp.ReturnedRows, &qhp.ReturnedBytes, &qhp.TimeInQueueMicroSeconds, &qhp.GatewayDurationMicroSeconds,
 					); err != nil {
 						slog.ErrorContext(ctx, "failed to scan query history metric",
 							slog.String("accountName", account), slog.String("engineName", engine.Name),
