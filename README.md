@@ -36,7 +36,7 @@ docker run --name firebolt-otel-exporter \
   -e FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS=127.0.0.1:4317 \
   -e FIREBOLT_OTEL_EXPORTER_LOG_LEVEL=debug \
   --network="host" \
-ghcr.io/firebolt-db/otel-exporter:v0.0.7
+ghcr.io/firebolt-db/otel-exporter:v0.1.0
 ```
 
 Meters and instruments
