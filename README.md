@@ -36,7 +36,7 @@ docker run --name firebolt-otel-exporter \
   -e FIREBOLT_OTEL_EXPORTER_GRPC_ADDRESS=127.0.0.1:4317 \
   -e FIREBOLT_OTEL_EXPORTER_LOG_LEVEL=debug \
   --network="host" \
-ghcr.io/firebolt-db/otel-exporter:v0.0.6
+ghcr.io/firebolt-db/otel-exporter:v0.0.7
 ```
 
 Meters and instruments
@@ -74,6 +74,7 @@ All the instruments in this meter have the following attributes:
 | firebolt.query.returned.bytes | Int64Counter     | The total number of bytes returned from the query               |
 | firebolt.query.spilled.bytes  | Int64Counter     | The total number of bytes spilled (uncompressed)                |
 | firebolt.query.queue.time     | Float64Counter   | Time the query spent in queue                                   |
+| firebolt.query.gateway.time   | Float64Histogram | End to end time the query spent in the gateway                  |
 
 All the instruments in this meter have the following attributes:
 - `firebolt.account.name` - name of the account
