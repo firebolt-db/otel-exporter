@@ -20,7 +20,7 @@ going to monitor.
     NOTE: exporter will query `information_schema.engines`, `information_schema.engine_metrics_history` and `information_schema.engine_query_history` views,
 so make sure that permission model allows Service Account use these views.
 
-Find more details on how to create a Service Account in [Firebolt documentation](https://docs.firebolt.io/godocs/Guides/managing-your-organization/service-accounts.html).
+Find more details on how to create a Service Account in [Firebolt documentation](https://docs.firebolt.io/guides/managing-your-organization/service-accounts).
 
 3. Run `otel-exporter` docker container.
 

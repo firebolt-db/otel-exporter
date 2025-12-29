@@ -49,7 +49,11 @@ func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]Engin
 		return nil, err
 	}
 
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.ErrorContext(ctx, "failed to close database connection", slog.Any("error", err))
+		}
+	}()
 
 	// we are only interested in running engines.
 	rows, err := db.QueryContext(ctx,
@@ -59,7 +63,11 @@ func (f *fetcher) FetchEngines(ctx context.Context, accountName string) ([]Engin
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			slog.ErrorContext(ctx, "failed to close rows", slog.Any("error", err))
+		}
+	}()
 
 	var engines []Engine
 
@@ -98,7 +106,14 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 					)
 					return
 				}
-				defer engDb.Close()
+				defer func() {
+					if err := engDb.Close(); err != nil {
+						slog.ErrorContext(ctx, "failed to close engine database connection",
+							slog.String("accountName", account), slog.String("engineName", engine.Name),
+							slog.Any("error", err),
+						)
+					}
+				}()
 
 				// read the metrics. Only interested in most recent metric within the time interval.
 				row := engDb.QueryRowContext(ctx,
@@ -161,7 +176,14 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 					)
 					return
 				}
-				defer engDb.Close()
+				defer func() {
+					if err := engDb.Close(); err != nil {
+						slog.ErrorContext(ctx, "failed to close engine database connection",
+							slog.String("accountName", account), slog.String("engineName", engine.Name),
+							slog.Any("error", err),
+						)
+					}
+				}()
 
 				// read the metrics within provided time interval. Entries with status='STARTED_EXECUTION' do not provide
 				// any metrics data, so they are skipped.
@@ -185,7 +207,14 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 					return
 				}
 
-				defer rows.Close()
+				defer func() {
+					if err := rows.Close(); err != nil {
+						slog.ErrorContext(ctx, "failed to close rows",
+							slog.String("accountName", account), slog.String("engineName", engine.Name),
+							slog.Any("error", err),
+						)
+					}
+				}()
 
 				// prepare the metric point. There can be multiple queries in history.
 				for rows.Next() {
