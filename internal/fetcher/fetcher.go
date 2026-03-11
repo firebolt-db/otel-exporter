@@ -118,9 +118,9 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 				// read the metrics. Only interested in most recent metric within the time interval.
 				row := engDb.QueryRowContext(ctx,
 					fmt.Sprintf(
-						`SELECT engine_cluster, event_time, cpu_used, memory_used, disk_used, 
-       						cache_hit_ratio, spilled_bytes, running_queries, suspended_queries  
-				FROM information_schema.engine_metrics_history 
+						`SELECT engine_cluster, event_time, cpu_used, memory_used, disk_used,
+       						cache_hit_ratio, spilled_bytes, running_queries, suspended_queries, number_of_clusters
+				FROM information_schema.engine_metrics_history
          		WHERE event_time > TIMESTAMPTZ '%s' AND event_time <= TIMESTAMPTZ '%s' 
          		ORDER BY event_time DESC LIMIT 1;`,
 						since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),

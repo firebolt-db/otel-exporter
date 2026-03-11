@@ -29,6 +29,7 @@ func Test_NewCollector(t *testing.T) {
 	require.NotNil(t, c.runtimeMetrics.diskUtilization)
 	require.NotNil(t, c.runtimeMetrics.cacheUtilization)
 	require.NotNil(t, c.runtimeMetrics.diskSpilled)
+	require.NotNil(t, c.runtimeMetrics.numberOfClusters)
 
 	require.NotNil(t, c.queryHistoryMetrics)
 	require.NotNil(t, c.queryHistoryMetrics.queryDuration)

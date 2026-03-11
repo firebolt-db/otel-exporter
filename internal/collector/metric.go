@@ -11,6 +11,7 @@ type runtimeMetrics struct {
 	diskSpilled       metric.Int64UpDownCounter
 	runningQueries    metric.Int64Gauge
 	suspendedQueries  metric.Int64Gauge
+	numberOfClusters  metric.Int64Gauge
 }
 
 // queryHistoryMetrics specifies a set of engine query history metrics.
@@ -100,6 +101,15 @@ func (c *collector) setupRuntimeMetrics() error {
 	rm.suspendedQueries, err = meter.Int64Gauge(
 		"firebolt.engine.suspended.queries",
 		metric.WithDescription("Number of suspended queries"),
+		metric.WithUnit("{count}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	rm.numberOfClusters, err = meter.Int64Gauge(
+		"firebolt.engine.clusters",
+		metric.WithDescription("Number of clusters in the engine"),
 		metric.WithUnit("{count}"),
 	)
 	if err != nil {

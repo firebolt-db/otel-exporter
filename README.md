@@ -55,6 +55,7 @@ The exporter's structure of meters and instruments is described below. See [OTLP
 | firebolt.engine.disk.spilled       | Int64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
 | firebolt.engine.running.queries    | Int64Gauge         | Number of running queries                                                                  |
 | firebolt.engine.suspended.queries  | Int64Gauge         | Number of suspended queries                                                                |
+| firebolt.engine.clusters           | Int64Gauge         | Number of clusters in the engine                                                           |
 
 All the instruments in this meter have the following attributes:
  - `firebolt.account.name` - name of the account

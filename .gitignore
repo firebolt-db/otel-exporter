@@ -1,3 +1,6 @@
 .env
 otel-exporter
 demo
+
+# JetBrains IDE
+.idea/

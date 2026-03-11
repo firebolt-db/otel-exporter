@@ -103,6 +103,7 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 		c.runtimeMetrics.diskSpilled.Add(ctx, mp.SpilledBytes.Int64, api.WithAttributeSet(attrsSet))
 		c.runtimeMetrics.runningQueries.Record(ctx, mp.RunningQueries.Int64, api.WithAttributeSet(attrsSet))
 		c.runtimeMetrics.suspendedQueries.Record(ctx, mp.SuspendedQueries.Int64, api.WithAttributeSet(attrsSet))
+		c.runtimeMetrics.numberOfClusters.Record(ctx, mp.NumberOfClusters.Int64, api.WithAttributeSet(attrsSet))
 	}
 
 	wg.Done()
