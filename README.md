@@ -52,7 +52,7 @@ The exporter's structure of meters and instruments is described below. See [OTLP
 | firebolt.engine.memory.utilization | Float64Gauge       | Current Memory used (percentage)                                                           |
 | firebolt.engine.disk.utilization   | Float64Gauge       | Currently used disk space which encompasses space used for cache and spilling (percentage) |
 | firebolt.engine.cache.hit_ratio    | Float64Gauge       | Current SSD cache hit ratio (percentage)                                                   |
-| firebolt.engine.disk.spilled       | Int64UpDownCounter | Amount of spilled data to disk (byte)                                                      |
+| firebolt.engine.disk.spilled       | Int64Gauge         | Amount of spilled data to disk (byte)                                                      |
 | firebolt.engine.running.queries    | Int64Gauge         | Number of running queries                                                                  |
 | firebolt.engine.suspended.queries  | Int64Gauge         | Number of suspended queries                                                                |
 
