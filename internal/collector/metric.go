@@ -8,7 +8,9 @@ type runtimeMetrics struct {
 	memoryUtilization metric.Float64Gauge
 	diskUtilization   metric.Float64Gauge
 	cacheUtilization  metric.Float64Gauge
-	diskSpilled       metric.Int64UpDownCounter
+	// diskSpilled is a gauge (not a counter) because engine_metrics_history.spilled_bytes
+	// reports the current bytes occupying disk at snapshot time, and naturally goes back to 0.
+	diskSpilled metric.Int64Gauge
 	runningQueries    metric.Int64Gauge
 	suspendedQueries  metric.Int64Gauge
 }
@@ -25,7 +27,9 @@ type queryHistoryMetrics struct {
 
 	returnedRows  metric.Int64Counter
 	returnedBytes metric.Int64Counter
-	spilledBytes  metric.Int64Counter
+	// spilledBytes is a counter because engine_query_history.spilled_bytes reports the
+	// cumulative total bytes written to disk by the spiller for each completed query.
+	spilledBytes metric.Int64Counter
 
 	queueTime            metric.Float64Counter
 	queryGatewayDuration metric.Float64Histogram
@@ -79,7 +83,7 @@ func (c *collector) setupRuntimeMetrics() error {
 		return err
 	}
 
-	rm.diskSpilled, err = meter.Int64UpDownCounter(
+	rm.diskSpilled, err = meter.Int64Gauge(
 		"firebolt.engine.disk.spilled",
 		metric.WithDescription("Amount of spilled data to disk in bytes"),
 		metric.WithUnit("byte"),
