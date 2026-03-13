@@ -42,6 +42,14 @@ func (p *EngineRuntimePoint) Scan(row *sql.Row) error {
 	)
 }
 
+// EngineMeteringPoint represents a single row from engine_metering_history, containing FBU consumption for one engine in one hour slot.
+type EngineMeteringPoint struct {
+	EngineName  string
+	StartHour   sql.Null[time.Time]
+	EndHour     sql.Null[time.Time]
+	ConsumedFBU sql.NullFloat64
+}
+
 // QueryHistoryPoint represents a snapshot point of query history metrics for a single query.
 type QueryHistoryPoint struct {
 	EngineName   string
