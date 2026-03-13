@@ -25,6 +25,7 @@ type EngineRuntimePoint struct {
 	SpilledBytes     sql.NullInt64
 	RunningQueries   sql.NullInt64
 	SuspendedQueries sql.NullInt64
+	NumberOfClusters sql.NullInt64
 }
 
 // Scan fills in EngineRuntimePoint fields from a single row.

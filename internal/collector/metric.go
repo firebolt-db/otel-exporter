@@ -10,9 +10,10 @@ type runtimeMetrics struct {
 	cacheUtilization  metric.Float64Gauge
 	// diskSpilled is a gauge (not a counter) because engine_metrics_history.spilled_bytes
 	// reports the current bytes occupying disk at snapshot time, and naturally goes back to 0.
-	diskSpilled metric.Int64Gauge
-	runningQueries    metric.Int64Gauge
-	suspendedQueries  metric.Int64Gauge
+	diskSpilled      metric.Int64Gauge
+	runningQueries   metric.Int64Gauge
+	suspendedQueries metric.Int64Gauge
+	clusters         metric.Int64Gauge
 }
 
 // queryHistoryMetrics specifies a set of engine query history metrics.
@@ -104,6 +105,15 @@ func (c *collector) setupRuntimeMetrics() error {
 	rm.suspendedQueries, err = meter.Int64Gauge(
 		"firebolt.engine.suspended.queries",
 		metric.WithDescription("Number of suspended queries"),
+		metric.WithUnit("{count}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	rm.clusters, err = meter.Int64Gauge(
+		"firebolt.engine.clusters",
+		metric.WithDescription("Number of active clusters in the engine"),
 		metric.WithUnit("{count}"),
 	)
 	if err != nil {

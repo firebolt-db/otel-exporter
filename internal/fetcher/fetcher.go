@@ -118,10 +118,10 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 				// read the metrics. Only interested in most recent metric within the time interval.
 				row := engDb.QueryRowContext(ctx,
 					fmt.Sprintf(
-						`SELECT engine_cluster, event_time, cpu_used, memory_used, disk_used, 
-       						cache_hit_ratio, spilled_bytes, running_queries, suspended_queries  
-				FROM information_schema.engine_metrics_history 
-         		WHERE event_time > TIMESTAMPTZ '%s' AND event_time <= TIMESTAMPTZ '%s' 
+						`SELECT engine_cluster, event_time, cpu_used, memory_used, disk_used,
+       						cache_hit_ratio, spilled_bytes, running_queries, suspended_queries
+				FROM information_schema.engine_metrics_history
+         		WHERE event_time > TIMESTAMPTZ '%s' AND event_time <= TIMESTAMPTZ '%s'
          		ORDER BY event_time DESC LIMIT 1;`,
 						since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
 					))
@@ -139,6 +139,21 @@ func (f *fetcher) FetchRuntimePoints(ctx context.Context, account string, engine
 						)
 					}
 					return
+				}
+
+				// query cluster count from the same connection; failure is non-fatal.
+				clusterRow := engDb.QueryRowContext(ctx,
+					fmt.Sprintf(
+						`SELECT COUNT(DISTINCT cluster_ordinal) AS number_of_clusters
+FROM information_schema.engine_metrics_history
+WHERE event_time > TIMESTAMPTZ '%s' AND event_time <= TIMESTAMPTZ '%s';`,
+						since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
+					))
+				if err := clusterRow.Scan(&erp.NumberOfClusters); err != nil {
+					slog.WarnContext(ctx, "failed to scan cluster count",
+						slog.String("accountName", account), slog.String("engineName", engine.Name),
+						slog.Any("error", err),
+					)
 				}
 
 				ch <- erp
@@ -189,12 +204,12 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 				// any metrics data, so they are skipped.
 				rows, err := engDb.QueryContext(ctx,
 					fmt.Sprintf(
-						`SELECT account_name, user_name, duration_us, status, scanned_rows, scanned_bytes, 
-       						inserted_rows, inserted_bytes, spilled_bytes, returned_rows, returned_bytes, 
+						`SELECT account_name, user_name, duration_us, status, scanned_rows, scanned_bytes,
+       						inserted_rows, inserted_bytes, spilled_bytes, returned_rows, returned_bytes,
 							time_in_queue_us, e2e_duration_us
 					FROM information_schema.engine_query_history
-					WHERE status <> 'STARTED_EXECUTION' 
-						AND submitted_time > TIMESTAMPTZ '%s' AND submitted_time <= TIMESTAMPTZ '%s' 
+					WHERE status <> 'STARTED_EXECUTION'
+						AND submitted_time > TIMESTAMPTZ '%s' AND submitted_time <= TIMESTAMPTZ '%s'
          		    ORDER BY submitted_time;`,
 						since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
 					),
