@@ -29,6 +29,7 @@ type collector struct {
 
 	runtimeMetrics      *runtimeMetrics
 	queryHistoryMetrics *queryHistoryMetrics
+	meteringMetrics     *meteringMetrics
 	exporterMetrics     *exporterMetrics
 
 	lastCollectedTime time.Time
@@ -83,6 +84,10 @@ func (c *collector) setupMetrics() error {
 	}
 
 	if err := c.setupQueryHistoryMetrics(); err != nil {
+		return err
+	}
+
+	if err := c.setupMeteringMetrics(); err != nil {
 		return err
 	}
 

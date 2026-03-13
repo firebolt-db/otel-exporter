@@ -42,6 +42,9 @@ func Test_NewCollector(t *testing.T) {
 	require.NotNil(t, c.queryHistoryMetrics.queueTime)
 	require.NotNil(t, c.queryHistoryMetrics.queryGatewayDuration)
 
+	require.NotNil(t, c.meteringMetrics)
+	require.NotNil(t, c.meteringMetrics.consumedFBU)
+
 	require.NotNil(t, c.exporterMetrics)
 	require.NotNil(t, c.exporterMetrics.duration)
 
@@ -60,6 +63,7 @@ type fetcherMock struct {
 	fetchEnginesFn            func(ctx context.Context, accountName string) ([]fetcher.Engine, error)
 	fetchRuntimePointsFn      func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.EngineRuntimePoint
 	fetchQueryHistoryPointsFn func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint
+	fetchMeteringPointsFn     func(ctx context.Context, account string, since, till time.Time) <-chan fetcher.EngineMeteringPoint
 }
 
 func newFetcherMock() *fetcherMock {
@@ -73,6 +77,9 @@ func newFetcherMock() *fetcherMock {
 		fetchQueryHistoryPointsFn: func(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 			panic("default FetchQueryHistoryPoints")
 		},
+		fetchMeteringPointsFn: func(ctx context.Context, account string, since, till time.Time) <-chan fetcher.EngineMeteringPoint {
+			panic("default FetchMeteringPoints")
+		},
 	}
 }
 
@@ -84,6 +91,9 @@ func (m *fetcherMock) FetchRuntimePoints(ctx context.Context, account string, en
 }
 func (m *fetcherMock) FetchQueryHistoryPoints(ctx context.Context, account string, engines []fetcher.Engine, since, till time.Time) <-chan fetcher.QueryHistoryPoint {
 	return m.fetchQueryHistoryPointsFn(ctx, account, engines, since, till)
+}
+func (m *fetcherMock) FetchMeteringPoints(ctx context.Context, account string, since, till time.Time) <-chan fetcher.EngineMeteringPoint {
+	return m.fetchMeteringPointsFn(ctx, account, since, till)
 }
 
 type exporterMock struct {

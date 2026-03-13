@@ -26,6 +26,12 @@ type Fetcher interface {
 	// It should close the channel when all data points are pushed.
 	// The metrics should be collected within the provided time interval.
 	FetchQueryHistoryPoints(ctx context.Context, account string, engines []Engine, since, till time.Time) <-chan QueryHistoryPoint
+
+	// FetchMeteringPoints returns a channel of EngineMeteringPoint and pushes data into that channel asynchronously.
+	// It should close the channel when all data points are pushed.
+	// It queries the system engine (account-level view) for FBU consumption per engine per hour.
+	// The metrics should be collected within the provided time interval.
+	FetchMeteringPoints(ctx context.Context, account string, since, till time.Time) <-chan EngineMeteringPoint
 }
 
 // fetcher is an implementation of Fetcher interface.
@@ -242,6 +248,72 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 		// wait until all engines metrics are pushed and close the channel
 		wg.Wait()
 		close(ch)
+	}()
+
+	return ch
+}
+
+// FetchMeteringPoints returns a channel of EngineMeteringPoint by querying the system engine.
+func (f *fetcher) FetchMeteringPoints(ctx context.Context, account string, since, till time.Time) <-chan EngineMeteringPoint {
+	ch := make(chan EngineMeteringPoint)
+
+	go func() {
+		defer close(ch)
+
+		// connect to system engine (empty engine name) — metering_history is an account-level view.
+		db, err := f.connect(ctx, account, "")
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to connect to system engine for metering",
+				slog.String("accountName", account),
+				slog.Any("error", err),
+			)
+			return
+		}
+		defer func() {
+			if err := db.Close(); err != nil {
+				slog.ErrorContext(ctx, "failed to close system engine connection",
+					slog.String("accountName", account),
+					slog.Any("error", err),
+				)
+			}
+		}()
+
+		rows, err := db.QueryContext(ctx,
+			fmt.Sprintf(
+				`SELECT engine_name, start_hour, end_hour, consumed_fbu
+				FROM information_schema.engine_metering_history
+				WHERE start_hour > TIMESTAMPTZ '%s' AND start_hour <= TIMESTAMPTZ '%s'
+				ORDER BY start_hour;`,
+				since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
+			),
+		)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to query engine metering history",
+				slog.String("accountName", account),
+				slog.Any("error", err),
+			)
+			return
+		}
+		defer func() {
+			if err := rows.Close(); err != nil {
+				slog.ErrorContext(ctx, "failed to close metering rows",
+					slog.String("accountName", account),
+					slog.Any("error", err),
+				)
+			}
+		}()
+
+		for rows.Next() {
+			var emp EngineMeteringPoint
+			if err := rows.Scan(&emp.EngineName, &emp.StartHour, &emp.EndHour, &emp.ConsumedFBU); err != nil {
+				slog.ErrorContext(ctx, "failed to scan metering point",
+					slog.String("accountName", account),
+					slog.Any("error", err),
+				)
+				return
+			}
+			ch <- emp
+		}
 	}()
 
 	return ch

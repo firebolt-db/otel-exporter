@@ -17,7 +17,7 @@ Prometheus etc., support OTLP standard and offer bundled OpenTelemetry collector
 2. Create a Service Account in your Firebolt Organization, and grant it with permissions in accounts which you are
 going to monitor. 
 
-    NOTE: exporter will query `information_schema.engines`, `information_schema.engine_metrics_history` and `information_schema.engine_query_history` views,
+    NOTE: exporter will query `information_schema.engines`, `information_schema.engine_metrics_history`, `information_schema.engine_query_history` and `information_schema.engine_metering_history` views,
 so make sure that permission model allows Service Account use these views.
 
 Find more details on how to create a Service Account in [Firebolt documentation](https://docs.firebolt.io/guides/managing-your-organization/service-accounts).
@@ -82,6 +82,16 @@ All the instruments in this meter have the following attributes:
 - `firebolt.user.name` - name of the user executing query
 - `firebolt.query.status` - status of the query
 - `firebolt.engine.status` - status of the engine (possible statuses are `RUNNING`, `RESIZING`, `DRAINING`)
+
+### Meter name: `firebolt.engine.metering`
+
+| Instrument                      | Type           | Description                          |
+|---------------------------------|----------------|--------------------------------------|
+| firebolt.engine.fbu.consumption | Float64Gauge   | FBU consumed per hour per engine     |
+
+All the instruments in this meter have the following attributes:
+- `firebolt.account.name` - name of the account
+- `firebolt.engine.name` - name of the engine
 
 ### Meter name: `firebolt.exporter`
 

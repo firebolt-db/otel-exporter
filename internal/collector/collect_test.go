@@ -49,6 +49,11 @@ func Test_Collector_Start(t *testing.T) {
 		require.Equal(t, eng, engines)
 		return qhCh
 	}
+	mCh := make(chan fetcher.EngineMeteringPoint)
+	f.fetchMeteringPointsFn = func(ctx context.Context, account string, since, till time.Time) <-chan fetcher.EngineMeteringPoint {
+		require.Equal(t, acctName, account)
+		return mCh
+	}
 	exportCalled := atomic.Bool{}
 	exportCalled.Store(false)
 	exp.exportFn = func(ctx context.Context, metrics *metricdata.ResourceMetrics) error {
@@ -78,6 +83,11 @@ func Test_Collector_Start(t *testing.T) {
 			EngineStatus:         "RESIZING",
 			DurationMicroSeconds: sql.NullInt64{Valid: true, Int64: 10},
 		}
+
+		mCh <- fetcher.EngineMeteringPoint{
+			EngineName:  "eng1",
+			ConsumedFBU: sql.NullFloat64{Valid: true, Float64: 5.5},
+		}
 		sentCh <- struct{}{}
 	}()
 
@@ -91,6 +101,7 @@ func Test_Collector_Start(t *testing.T) {
 	<-sentCh
 	close(rCh)
 	close(qhCh)
+	close(mCh)
 	<-doneCh
 
 	require.Eventually(t, func() bool {

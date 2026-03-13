@@ -35,6 +35,11 @@ type queryHistoryMetrics struct {
 	queryGatewayDuration metric.Float64Histogram
 }
 
+// meteringMetrics specifies a set of engine metering metrics.
+type meteringMetrics struct {
+	consumedFBU metric.Float64Gauge
+}
+
 // exporterMetrics specifies a set of supplementary metrics of otel-exporter.
 type exporterMetrics struct {
 	duration metric.Float64Counter
@@ -212,6 +217,26 @@ func (c *collector) setupQueryHistoryMetrics() error {
 	}
 
 	c.queryHistoryMetrics = qhm
+	return nil
+}
+
+// setupMeteringMetrics prepares engine metering metrics.
+func (c *collector) setupMeteringMetrics() error {
+	meter := c.meterProvider.Meter("firebolt.engine.metering")
+
+	var err error
+	mm := &meteringMetrics{}
+
+	mm.consumedFBU, err = meter.Float64Gauge(
+		"firebolt.engine.fbu.consumption",
+		metric.WithDescription("FBU consumed per hour per engine"),
+		metric.WithUnit("{FBU}"),
+	)
+	if err != nil {
+		return err
+	}
+
+	c.meteringMetrics = mm
 	return nil
 }
 

@@ -25,6 +25,7 @@ func (c *collector) Start(ctx context.Context, interval time.Duration) error {
 	collectors := []collectorFn{
 		c.collectRuntimeMetrics,
 		c.collectQueryHistoryMetrics,
+		c.collectMeteringMetrics,
 	}
 
 	for {
@@ -108,6 +109,28 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 	wg.Done()
 
 	slog.DebugContext(ctx, "collecting runtime metrics routine finished", slog.String("accountName", accountName))
+}
+
+// collectMeteringMetrics collects and reports FBU consumption per hour per engine from the system engine.
+func (c *collector) collectMeteringMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, _ []fetcher.Engine, since, till time.Time) {
+	slog.DebugContext(ctx, "start collecting metering metrics", slog.String("accountName", accountName))
+
+	pointsCh := c.fetcher.FetchMeteringPoints(ctx, accountName, since, till)
+
+	for mp := range pointsCh {
+		attrs := []attribute.KeyValue{
+			attribute.Key("firebolt.account.name").String(accountName),
+			attribute.Key("firebolt.engine.name").String(mp.EngineName),
+		}
+
+		attrsSet := attribute.NewSet(attrs...)
+
+		c.meteringMetrics.consumedFBU.Record(ctx, mp.ConsumedFBU.Float64, api.WithAttributeSet(attrsSet))
+	}
+
+	wg.Done()
+
+	slog.DebugContext(ctx, "collecting metering metrics routine finished", slog.String("accountName", accountName))
 }
 
 // collectQueryHistoryMetrics collects and reports query history metrics, such as rows and bytes scanned, etc.
