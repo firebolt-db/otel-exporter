@@ -47,8 +47,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push multi-arch manifest
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
         run: |
+          if [[ ! "$VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Invalid release tag: $VERSION" >&2
+            exit 1
+          fi
+
           docker buildx imagetools create \
-            --tag ghcr.io/firebolt-db/otel-exporter:${{ github.event.release.tag_name }} \
-            ghcr.io/firebolt-db/otel-exporter:${{ github.event.release.tag_name }}-amd64 \
-            ghcr.io/firebolt-db/otel-exporter:${{ github.event.release.tag_name }}-arm64
+            --tag "ghcr.io/firebolt-db/otel-exporter:$VERSION" \
+            "ghcr.io/firebolt-db/otel-exporter:$VERSION-amd64" \
+            "ghcr.io/firebolt-db/otel-exporter:$VERSION-arm64"

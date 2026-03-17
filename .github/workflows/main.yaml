@@ -67,9 +67,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push multi-arch manifest
+        env:
+          VERSION: ${{ needs.version.outputs.semver-oci }}
         run: |
+          if [[ ! "$VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Invalid image version: $VERSION" >&2
+            exit 1
+          fi
+
           docker buildx imagetools create \
-            --tag ghcr.io/firebolt-db/otel-exporter:${{ needs.version.outputs.semver-oci }} \
-            ghcr.io/firebolt-db/otel-exporter:${{ needs.version.outputs.semver-oci }}-amd64 \
-            ghcr.io/firebolt-db/otel-exporter:${{ needs.version.outputs.semver-oci }}-arm64
+            --tag "ghcr.io/firebolt-db/otel-exporter:$VERSION" \
+            "ghcr.io/firebolt-db/otel-exporter:$VERSION-amd64" \
+            "ghcr.io/firebolt-db/otel-exporter:$VERSION-arm64"
 
