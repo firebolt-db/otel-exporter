@@ -19,6 +19,28 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate inputs
+      id: validate_inputs
+      shell: bash
+      env:
+        INPUT_ARCH: ${{ inputs.arch }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        case "$INPUT_ARCH" in
+          amd64|arm64) ;;
+          *)
+            echo "Unsupported arch: $INPUT_ARCH" >&2
+            exit 1
+            ;;
+        esac
+
+        if [[ ! "$INPUT_VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+          echo "Invalid version: $INPUT_VERSION" >&2
+          exit 1
+        fi
+
+        echo "arch=$INPUT_ARCH" >> "$GITHUB_OUTPUT"
+        echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Setup Go
       uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c  # v6.1.0
@@ -27,14 +49,17 @@ runs:
 
     - name: Build
       shell: bash
+      env:
+        ARCH: ${{ steps.validate_inputs.outputs.arch }}
+        VERSION: ${{ steps.validate_inputs.outputs.version }}
       run: |
         CGO_ENABLED=0 \
         GOOS=linux \
-        GOARCH=${{ inputs.arch }} \
+        GOARCH="$ARCH" \
         go build \
           -trimpath \
           -buildmode=pie \
-          --ldflags="-s -w -X github.com/firebolt-db/otel-exporter/internal/collector.Version=${{ inputs.version }}" \
+          --ldflags="-s -w -X github.com/firebolt-db/otel-exporter/internal/collector.Version=$VERSION" \
           -o ./otel-exporter .
 
     - name: Set up QEMU
@@ -54,7 +79,7 @@ runs:
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83  # v6.18.0
       with:
         context: .
-        platforms: linux/${{ inputs.arch }}
+        platforms: linux/${{ steps.validate_inputs.outputs.arch }}
         push: true
         tags: |
-          ghcr.io/firebolt-db/otel-exporter:${{ inputs.version }}-${{ inputs.arch }}
+          ghcr.io/firebolt-db/otel-exporter:${{ steps.validate_inputs.outputs.version }}-${{ steps.validate_inputs.outputs.arch }}
