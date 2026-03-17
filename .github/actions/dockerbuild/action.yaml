@@ -9,6 +9,9 @@ inputs:
   version:
     required: true
     description: A version to tag the docker image with
+  arch:
+    required: true
+    description: Target architecture to build for (amd64 or arm64)
   gh_token:
     required: true
     description: Github token
@@ -26,6 +29,8 @@ runs:
       shell: bash
       run: |
         CGO_ENABLED=0 \
+        GOOS=linux \
+        GOARCH=${{ inputs.arch }} \
         go build \
           -trimpath \
           -buildmode=pie \
@@ -49,7 +54,7 @@ runs:
       uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83  # v6.18.0
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/${{ inputs.arch }}
         push: true
         tags: |
-          ghcr.io/firebolt-db/otel-exporter:${{ inputs.version }}
+          ghcr.io/firebolt-db/otel-exporter:${{ inputs.version }}-${{ inputs.arch }}
