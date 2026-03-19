@@ -293,13 +293,15 @@ func (f *fetcher) FetchMeteringPoints(ctx context.Context, account string, since
 			}
 		}()
 
+		// Metering is in hourly buckets; (since, till] is usually a short window (e.g. 1 min).
+		// Include any hour that overlaps the window: start_hour < till AND end_hour > since.
 		rows, err := db.QueryContext(ctx,
 			fmt.Sprintf(
 				`SELECT engine_name, start_hour, end_hour, consumed_fbu
 				FROM information_schema.engine_metering_history
-				WHERE start_hour > TIMESTAMPTZ '%s' AND start_hour <= TIMESTAMPTZ '%s'
+				WHERE start_hour < TIMESTAMPTZ '%s' AND end_hour > TIMESTAMPTZ '%s'
 				ORDER BY start_hour;`,
-				since.Format(time.DateTime+"-07"), till.Format(time.DateTime+"-07"),
+				till.Format(time.DateTime+"-07"), since.Format(time.DateTime+"-07"),
 			),
 		)
 		if err != nil {
