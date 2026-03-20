@@ -50,7 +50,7 @@ func Test_Collector_Start(t *testing.T) {
 		return qhCh
 	}
 	mCh := make(chan fetcher.EngineMeteringPoint)
-	f.fetchMeteringPointsFn = func(ctx context.Context, account string, since, till time.Time) <-chan fetcher.EngineMeteringPoint {
+	f.fetchMeteringPointsFn = func(ctx context.Context, account string, engine fetcher.Engine, since, till time.Time) <-chan fetcher.EngineMeteringPoint {
 		require.Equal(t, acctName, account)
 		return mCh
 	}
