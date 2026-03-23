@@ -31,7 +31,7 @@ type Fetcher interface {
 	// It should close the channel when all data points are pushed.
 	// It queries the system engine (account-level view) for FBU consumption per engine per hour.
 	// The metrics should be collected within the provided time interval.
-	FetchMeteringPoints(ctx context.Context, account string, since, till time.Time) <-chan EngineMeteringPoint
+	FetchMeteringPoints(ctx context.Context, account string, engine Engine, since, till time.Time) <-chan EngineMeteringPoint
 }
 
 // fetcher is an implementation of Fetcher interface.
@@ -269,14 +269,14 @@ func (f *fetcher) FetchQueryHistoryPoints(ctx context.Context, account string, e
 }
 
 // FetchMeteringPoints returns a channel of EngineMeteringPoint by querying the system engine.
-func (f *fetcher) FetchMeteringPoints(ctx context.Context, account string, since, till time.Time) <-chan EngineMeteringPoint {
+func (f *fetcher) FetchMeteringPoints(ctx context.Context, account string, engine Engine, _, _ time.Time) <-chan EngineMeteringPoint {
 	ch := make(chan EngineMeteringPoint)
 
 	go func() {
 		defer close(ch)
 
 		// connect to system engine (empty engine name) — metering_history is an account-level view.
-		db, err := f.connect(ctx, account, "")
+		db, err := f.connect(ctx, account, engine.Name)
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to connect to system engine for metering",
 				slog.String("accountName", account),
@@ -293,16 +293,12 @@ func (f *fetcher) FetchMeteringPoints(ctx context.Context, account string, since
 			}
 		}()
 
-		// Metering is in hourly buckets; (since, till] is usually a short window (e.g. 1 min).
-		// Include any hour that overlaps the window: start_hour < till AND end_hour > since.
-		rows, err := db.QueryContext(ctx,
-			fmt.Sprintf(
-				`SELECT engine_name, start_hour, end_hour, consumed_fbu
-				FROM information_schema.engine_metering_history
-				WHERE start_hour < TIMESTAMPTZ '%s' AND end_hour > TIMESTAMPTZ '%s'
-				ORDER BY start_hour;`,
-				till.Format(time.DateTime+"-07"), since.Format(time.DateTime+"-07"),
-			),
+		rows, err := db.QueryContext(
+			ctx,
+			`SELECT engine_name, start_hour, end_hour, consumed_fbu
+					FROM information_schema.engine_metering_history
+					WHERE start_hour = DATE_TRUNC('hour', NOW()) 
+					  AND end_hour =  DATE_TRUNC('hour', NOW() + INTERVAL '1 hour');`,
 		)
 		if err != nil {
 			slog.ErrorContext(ctx, "failed to query engine metering history",

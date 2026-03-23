@@ -113,10 +113,19 @@ func (c *collector) collectRuntimeMetrics(ctx context.Context, wg *sync.WaitGrou
 }
 
 // collectMeteringMetrics collects and reports FBU consumption per hour per engine from the system engine.
-func (c *collector) collectMeteringMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, _ []fetcher.Engine, since, till time.Time) {
+func (c *collector) collectMeteringMetrics(ctx context.Context, wg *sync.WaitGroup, accountName string, engines []fetcher.Engine, since, till time.Time) {
+
+	defer wg.Done()
+
 	slog.DebugContext(ctx, "start collecting metering metrics", slog.String("accountName", accountName))
 
-	pointsCh := c.fetcher.FetchMeteringPoints(ctx, accountName, since, till)
+	// FBU values only served by real engines
+	if len(engines) == 0 {
+		slog.Warn("no running engines found for account", slog.String("accountName", accountName))
+		return
+	}
+
+	pointsCh := c.fetcher.FetchMeteringPoints(ctx, accountName, engines[0], since, till)
 
 	for mp := range pointsCh {
 		attrs := []attribute.KeyValue{
@@ -128,8 +137,6 @@ func (c *collector) collectMeteringMetrics(ctx context.Context, wg *sync.WaitGro
 
 		c.meteringMetrics.consumedFBU.Record(ctx, mp.ConsumedFBU.Float64, api.WithAttributeSet(attrsSet))
 	}
-
-	wg.Done()
 
 	slog.DebugContext(ctx, "collecting metering metrics routine finished", slog.String("accountName", accountName))
 }
