@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/base@sha256:786007f631d22e8a1a5084c5b177352d9dcac24b1e8c815187750f70b24a9fc6
+FROM gcr.io/distroless/base@sha256:44a80dc28b49f47396e72ab2dc644b3f849880335de09625762faed207bb891d
 LABEL \
         org.opencontainers.image.title="Firebolt OpenTelemetry Exporter" \
         org.opencontainers.image.description="Image for Firebolt OpenTelemetry Exporter" \
